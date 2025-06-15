@@ -4,11 +4,11 @@ import Navbar from "@/components/Navbar";
 import RecipeForm from "@/components/RecipeForm";
 import HowItWorks from "@/components/HowItWorks";
 
-// Food background image from Unsplash (as in RecipeForm)
+// New, light, healthy food background image from Unsplash (bowl of fruit/veggies)
+// This is bright, colorful, and better reflects a healthy lifestyle
 const FOOD_BG =
-  "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=1500&q=80";
+  "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?auto=format&fit=crop&w=1500&q=80";
 
-// The landing page: food imagery covers the whole page, with overlay
 const Index = () => {
   const [loggedIn] = useState(false);
 
@@ -23,23 +23,27 @@ const Index = () => {
           src={FOOD_BG}
           alt=""
           className="w-full h-full object-cover object-center min-h-screen"
-          style={{ filter: "brightness(0.67) blur(0.5px)" }}
+          style={{
+            filter: "brightness(0.92) blur(0.5px)",
+            objectFit: "cover",
+            objectPosition: "center",
+          }}
         />
-        {/* Soft colored overlay for readability */}
+        {/* Updated overlay: softer, more "fresh" transparency for healthy theme */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(135deg, rgba(254,242,200,0.54) 0%, rgba(236,253,245,0.64) 100%)",
+              "linear-gradient(135deg, rgba(236,253,245,0.65) 0%, rgba(254,242,200,0.40) 100%)",
             mixBlendMode: "multiply",
           }}
         ></div>
-        {/* Very subtle dark radial vignette for contrast */}
+        {/* Gentle white vignette for contrast and care */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(circle at 60% 25%, rgba(0,0,0,0.09) 0%, rgba(0,0,0,0.04) 65%, rgba(0,0,0,0) 100%)",
+              "radial-gradient(ellipse at 60% 25%, rgba(244,255,234,0.12) 0%, rgba(244,255,234,0.04) 55%, rgba(255,255,255,0) 100%)",
           }}
         ></div>
       </div>
