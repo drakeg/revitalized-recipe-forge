@@ -1,7 +1,7 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
+import RecipeAnalysisResult from "./RecipeAnalysisResult";
 
 // Use the supplied placeholder image as a background.
 // Picking: "photo-1618160702438-9b02ab6515c9" - black and brown round fruit on brown wooden round plate.
@@ -20,6 +20,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
   const [recipeText, setRecipeText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -33,17 +35,43 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
     setFile(null);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+    setError(null);
+    setAnalysis(null);
+
+    try {
+      // Only analyze if there's text available; skip file uploads here (extension later)
+      if (recipeText && recipeText.length > 0) {
+        const response = await fetch(
+          "https://xvtfkjjvzjjwpgrwteem.functions.supabase.co/analyze-recipe",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, text: recipeText }),
+          }
+        );
+        const resJson = await response.json();
+        if (!response.ok || resJson.error) {
+          setError(resJson.error || "Failed to analyze recipe.");
+          setAnalysis(null);
+        } else {
+          setAnalysis(resJson.result);
+        }
+      } else {
+        setError("Uploading and analyzing files will be supported soon. Please paste recipe text for now.");
+      }
       setIsSubmitting(false);
       setTitle("");
       setRecipeText("");
       setFile(null);
       if (onSubmit) onSubmit({ title, text: recipeText, file });
-      alert("Recipe submitted! (Functionality coming soon.)");
-    }, 1000);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setError(err.message || "Unexpected error while analyzing.");
+      setAnalysis(null);
+    }
   };
 
   return (
@@ -218,6 +246,10 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
             )}
           </Button>
         </form>
+        {error && (
+          <div className="mt-4 text-center text-destructive text-sm font-semibold">{error}</div>
+        )}
+        {analysis && <RecipeAnalysisResult result={analysis} />}
       </div>
     </section>
   );
