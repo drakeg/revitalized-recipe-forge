@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
@@ -31,8 +30,15 @@ serve(async (req: Request) => {
       });
     }
 
-    // Construct the prompt
-    const prompt = `Analyze this recipe and provide a nutritional breakdown (calories, carbs, protein, fat, fiber, sodium, sugar, vitamins), suitable for showing a summary to a health-conscious cook. Format your answer as a short readable markdown section. Recipe:\n${title ? "Title: " + title : ""}\n${text ? text : ""}`;
+    // Improved prompt to request both nutritional breakdown and healthy modifications
+    const prompt = `Analyze this recipe and provide:
+- A nutritional breakdown (calories, carbs, protein, fat, fiber, sodium, sugar, vitamins).
+- Then, suggest specific ingredient and/or instruction modifications to make this recipe healthier (e.g., reduce sugar, swap fats, increase fiber, add more vegetables, reduce sodium, etc).
+- Return your answer as clear, structured markdown, with sections titled "Nutritional Analysis" and "Suggestions to Make Healthier".
+
+Recipe:
+${title ? "Title: " + title : ""}
+${text ? text : ""}`;
 
     // Call Deepseek's API
     // Reference: https://platform.deepseek.com/docs/api
