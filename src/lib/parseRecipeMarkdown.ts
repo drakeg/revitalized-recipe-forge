@@ -9,7 +9,12 @@ export function parseRecipeMarkdown(result: string) {
   let ingredients: string[] = [];
   let instructions: string[] = [];
   let nutritionHeader = "";
-  let nutritionTable: { headers: string[]; values: string[] } | null = null;
+  let nutritionTable:
+    | {
+        headers: string[];
+        rows: string[][];
+      }
+    | null = null;
 
   let section: "title" | "ingredients" | "instructions" | "nutritionLabel" | null = null;
   let buffer: string[] = [];
@@ -83,22 +88,31 @@ export function parseRecipeMarkdown(result: string) {
     title = title.replace(/^healthier\b\s*/i, "");
   }
 
-  // Nutrition: parse markdown table (first is headers, subsequent rows are values)
+  // Nutrition: parse markdown table (header plus all value rows)
   if (buffer.length > 1) {
-    // Find the header row (usually first with at least one real word)
     const headerRow = buffer[0];
-    // Find all value rows that aren't dashes
-    const valueRows = buffer.slice(1).filter(
-      l => l && !/^(\s*\|?\s*-+\s*)+\|?\s*$/.test(l)
-    );
-    const headers = headerRow.split('|').map(h => h.trim()).filter(Boolean);
-    // Only use the first value row for current single-valued nutrition output
-    let values: string[] = [];
-    if (valueRows.length) {
-      values = valueRows[0].split('|').map(v => v.trim()).filter(Boolean);
+    // All actual value rows (not headers or separators)
+    const valueRows = buffer
+      .slice(1)
+      .filter(
+        (l) =>
+          l &&
+          !/^(\s*\|?\s*-+\s*)+\|?\s*$/.test(l) && // not all dashes
+          /\|/.test(l) // must have a pipe
+      );
+    const headers = headerRow.split("|").map((h) => h.trim()).filter(Boolean);
+    const rows: string[][] = [];
+    for (let valueRow of valueRows) {
+      const vals = valueRow.split("|").map((v) => v.trim()).filter(Boolean);
+      // Only include rows where at least one cell isn't blank and array length matches headers
+      if (vals.length >= 2 && vals.length <= headers.length) {
+        // If missing trailing values, fill with blanks:
+        while (vals.length < headers.length) vals.push("");
+        rows.push(vals);
+      }
     }
-    if (headers.length && values.length) {
-      nutritionTable = { headers, values };
+    if (headers.length && rows.length) {
+      nutritionTable = { headers, rows };
     }
   }
 

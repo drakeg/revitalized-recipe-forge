@@ -2,9 +2,6 @@
 import React from "react";
 import { parseRecipeMarkdown } from "@/lib/parseRecipeMarkdown";
 
-// The returned analysis result is markdown: parse and format as rich HTML.
-// Also, add logging for debugging if parsing fails.
-
 const RecipeAnalysisResult: React.FC<{ result: string }> = ({ result }) => {
   const { title, ingredients, instructions, nutritionTable } = parseRecipeMarkdown(result);
 
@@ -70,16 +67,18 @@ const RecipeAnalysisResult: React.FC<{ result: string }> = ({ result }) => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  {nutritionTable.values.map((val, i) => (
-                    <td
-                      key={i}
-                      className="py-1 px-2 text-base font-semibold text-emerald-900"
-                    >
-                      {val}
-                    </td>
-                  ))}
-                </tr>
+                {nutritionTable.rows.map((row, idx) => (
+                  <tr key={idx}>
+                    {row.map((val, i) => (
+                      <td
+                        key={i}
+                        className="py-1 px-2 text-base font-semibold text-emerald-900"
+                      >
+                        {val}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
