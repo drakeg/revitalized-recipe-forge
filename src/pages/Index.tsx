@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import RecipeForm from "@/components/RecipeForm";
 import HowItWorks from "@/components/HowItWorks";
 
+// HEALTHIER: Colorful salad bowl (public domain) - you may swap this for any preferred healthy image!
 const FOOD_BG =
   "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?auto=format&fit=crop&w=1500&q=80";
 
@@ -15,16 +16,12 @@ const Index = () => {
       {/* Full-screen background image with debug styling */}
       <div
         className="fixed inset-0 z-0 w-full h-full pointer-events-none select-none border-4 border-emerald-400"
-        style={{
-          background:
-            "repeating-linear-gradient(45deg,#e6fffb,#e6fffb 24px,#fcffe6 24px,#fcffe6 48px)",
-        }}
         aria-hidden
       >
         <img
           src={FOOD_BG}
           alt="Healthy food background: Bowl of fruit and veggies"
-          className="w-full h-full object-cover object-center min-h-screen block"
+          className="absolute inset-0 w-full h-full object-cover object-center min-h-screen block"
           style={{
             filter: "brightness(0.92) blur(0.5px)",
             objectFit: "cover",
@@ -32,27 +29,21 @@ const Index = () => {
             width: "100vw",
             height: "100vh",
             display: "block",
+            backgroundColor: "#8ef58e", // bright green fallback
+            zIndex: 0,
           }}
         />
-        {/* Overlay: Fresh healthy style */}
+        {/* Overlay: Transparent so image is visible! */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(135deg, rgba(236,253,245,0.65) 0%, rgba(254,242,200,0.40) 100%)",
-            mixBlendMode: "multiply",
+              "linear-gradient(135deg, rgba(236,253,245,0.45) 0%, rgba(254,242,200,0.27) 100%)",
+            zIndex: 1,
           }}
         ></div>
-        {/* Gentle white vignette for contrast and care */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 60% 25%, rgba(244,255,234,0.12) 0%, rgba(244,255,234,0.04) 55%, rgba(255,255,255,0) 100%)",
-          }}
-        ></div>
-        {/* Fallback content if image fails */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        {/* Fallback for debugging if image fails */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
           <span className="bg-white/80 px-4 py-2 text-lg font-bold text-emerald-800 rounded-xl shadow-lg">
             If you see this, the image didn't load.
           </span>
@@ -71,3 +62,4 @@ const Index = () => {
 };
 
 export default Index;
+
