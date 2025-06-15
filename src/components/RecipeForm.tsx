@@ -27,6 +27,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // NEW: Hide form after recipe has been analyzed
+  const [submitted, setSubmitted] = useState(false);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
@@ -62,6 +65,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
           setAnalysis(null);
         } else {
           setAnalysis(resJson.result);
+          setSubmitted(true); // <--- Hide the form
         }
       } else {
         setError("Uploading and analyzing files will be supported soon. Please paste recipe text for now.");
@@ -76,6 +80,16 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
       setError(err.message || "Unexpected error while analyzing.");
       setAnalysis(null);
     }
+  };
+
+  // NEW: Reset everything, show form again
+  const resetForm = () => {
+    setSubmitted(false);
+    setAnalysis(null);
+    setError(null);
+    setTitle("");
+    setRecipeText("");
+    setFile(null);
   };
 
   return (
@@ -108,53 +122,71 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
       </div>
       {/* The card content above image background */}
       <div className="relative z-10 rounded-3xl border border-emerald-100 shadow-2xl bg-gradient-to-tr from-emerald-50/90 via-lime-50/90 to-yellow-50/95 p-7 backdrop-blur-md">
-        <RecipeFormHeader />
-        <form
-          onSubmit={handleFormSubmit}
-          className="space-y-5"
-          autoComplete="off"
-          aria-label="Recipe submission form"
-        >
-          <div>
-            <label
-              htmlFor="recipe-title"
-              className="block font-medium mb-1 text-green-900"
+        {!submitted && (
+          <>
+            <RecipeFormHeader />
+            <form
+              onSubmit={handleFormSubmit}
+              className="space-y-5"
+              autoComplete="off"
+              aria-label="Recipe submission form"
             >
-              Recipe Title<span className="text-destructive">*</span>
-            </label>
-            <input
-              id="recipe-title"
-              type="text"
-              className="input w-full p-2 rounded-lg border mt-1 outline-none bg-background focus:ring-2 ring-emerald-400 placeholder:text-muted-foreground"
-              placeholder="e.g. Grandma's Apple Pie"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              autoFocus
-              maxLength={80}
-            />
-          </div>
-          <RecipeTextInput
-            value={recipeText}
-            onChange={handleTextAreaChange}
-            disabled={!!file}
-          />
-          <RecipeFileInput
-            file={file}
-            onFileChange={handleFileChange}
-            onRemove={() => setFile(null)}
-            disabled={!!recipeText}
-            acceptedFileTypes={acceptedFileTypes}
-          />
-          <RecipeSubmitButton
-            isSubmitting={isSubmitting}
-            disabled={isSubmitting || (!recipeText && !file) || !title}
-          />
-        </form>
-        {error && (
-          <div className="mt-4 text-center text-destructive text-sm font-semibold">{error}</div>
+              <div>
+                <label
+                  htmlFor="recipe-title"
+                  className="block font-medium mb-1 text-green-900"
+                >
+                  Recipe Title<span className="text-destructive">*</span>
+                </label>
+                <input
+                  id="recipe-title"
+                  type="text"
+                  className="input w-full p-2 rounded-lg border mt-1 outline-none bg-background focus:ring-2 ring-emerald-400 placeholder:text-muted-foreground"
+                  placeholder="e.g. Grandma's Apple Pie"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  autoFocus
+                  maxLength={80}
+                />
+              </div>
+              <RecipeTextInput
+                value={recipeText}
+                onChange={handleTextAreaChange}
+                disabled={!!file}
+              />
+              <RecipeFileInput
+                file={file}
+                onFileChange={handleFileChange}
+                onRemove={() => setFile(null)}
+                disabled={!!recipeText}
+                acceptedFileTypes={acceptedFileTypes}
+              />
+              <RecipeSubmitButton
+                isSubmitting={isSubmitting}
+                disabled={isSubmitting || (!recipeText && !file) || !title}
+              />
+            </form>
+            {error && (
+              <div className="mt-4 text-center text-destructive text-sm font-semibold">{error}</div>
+            )}
+          </>
         )}
-        {analysis && <RecipeAnalysisResult result={analysis} />}
+        {/* Result Display */}
+        {analysis && (
+          <>
+            <RecipeAnalysisResult result={analysis} />
+            <div className="w-full flex justify-center mt-4">
+              <Button
+                variant="outline"
+                className="font-semibold text-emerald-700 px-6 py-2 bg-white/80 hover:bg-yellow-100 border-2 border-emerald-300"
+                onClick={resetForm}
+              >
+                Convert Another Recipe
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
