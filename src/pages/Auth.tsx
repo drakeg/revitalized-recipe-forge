@@ -10,6 +10,7 @@ const AuthPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -25,6 +26,7 @@ const AuthPage: React.FC = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setSubmitting(true);
 
     try {
@@ -44,7 +46,9 @@ const AuthPage: React.FC = () => {
           },
         });
         if (error) throw error;
-        alert("Account created! Please check your email to confirm your address.");
+        setSuccess(
+          "Account created! Please check your email to confirm your address before logging in."
+        );
       }
       // Page reload ensures a fully clean state after auth
       window.location.href = "/";
@@ -60,6 +64,12 @@ const AuthPage: React.FC = () => {
         <h2 className="mb-4 text-2xl font-bold text-emerald-800 text-center">
           {view === "login" ? "Login to Your Account" : "Create an Account"}
         </h2>
+        {/* Show success message in a nice banner */}
+        {success && (
+          <div className="mb-3 w-full rounded-lg border border-emerald-400 bg-emerald-50 px-4 py-3 text-emerald-900 font-semibold text-center shadow-sm">
+            {success}
+          </div>
+        )}
         <form className="flex flex-col gap-4" onSubmit={handleAuth}>
           <label>
             <span className="block text-lg text-emerald-900 font-medium mb-1">Email</span>
@@ -105,7 +115,7 @@ const AuthPage: React.FC = () => {
               <span className="text-muted-foreground mr-1">No account?</span>
               <button
                 className="text-emerald-700 font-semibold hover:underline"
-                onClick={() => { setView("signup"); setError(null); }}
+                onClick={() => { setView("signup"); setError(null); setSuccess(null); }}
                 disabled={submitting}
               >
                 Sign up
@@ -116,7 +126,7 @@ const AuthPage: React.FC = () => {
               <span className="text-muted-foreground mr-1">Already have an account?</span>
               <button
                 className="text-emerald-700 font-semibold hover:underline"
-                onClick={() => { setView("login"); setError(null); }}
+                onClick={() => { setView("login"); setError(null); setSuccess(null); }}
                 disabled={submitting}
               >
                 Log in

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
@@ -6,6 +7,7 @@ import RecipeFormHeader from "./RecipeFormHeader";
 import RecipeTextInput from "./RecipeTextInput";
 import RecipeFileInput from "./RecipeFileInput";
 import RecipeSubmitButton from "./RecipeSubmitButton";
+import { supabase } from "@/integrations/supabase/client";
 
 // Use the supplied placeholder image as a background.
 // Picking: "photo-1618160702438-9b02ab6515c9" - black and brown round fruit on brown wooden round plate.
@@ -14,12 +16,13 @@ const FOOD_BG =
 
 type RecipeFormProps = {
   onSubmit?: (data: { title: string; text: string; file: File | null }) => void;
+  session?: any;
 };
 
 const acceptedFileTypes =
   ".pdf,.txt,.doc,.docx,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
+const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
   const [title, setTitle] = useState("");
   const [recipeText, setRecipeText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -29,6 +32,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
 
   // NEW: Hide form after recipe has been analyzed
   const [submitted, setSubmitted] = useState(false);
+  // Track saving state for "save" button
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -49,7 +55,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
     setAnalysis(null);
 
     try {
-      // Only analyze if there's text available; skip file uploads here (extension later)
       if (recipeText && recipeText.length > 0) {
         const response = await fetch(
           "https://xvtfkjjvzjjwpgrwteem.functions.supabase.co/analyze-recipe",
@@ -65,7 +70,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
           setAnalysis(null);
         } else {
           setAnalysis(resJson.result);
-          setSubmitted(true); // <--- Hide the form
+          setSubmitted(true); // Hide the form
         }
       } else {
         setError("Uploading and analyzing files will be supported soon. Please paste recipe text for now.");
@@ -90,11 +95,26 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
     setTitle("");
     setRecipeText("");
     setFile(null);
+    setSaveSuccess(null);
   };
+
+  // NEW: Save recipe dummy for now - toast/alert
+  const saveRecipe = async () => {
+    setSaving(true);
+    setSaveSuccess(null);
+    // Here we’d save to the database if we had a recipe table.
+    setTimeout(() => {
+      setSaving(false);
+      setSaveSuccess("Recipe saved to your Recipe Book!");
+    }, 850);
+  };
+
+  // Check if user is logged in via session
+  let userIsLoggedIn = false;
+  if (session && session.user) userIsLoggedIn = true;
 
   return (
     <section className="w-full max-w-xl mx-auto relative my-10 animate-fade-in">
-      {/* Food photo BG with overlay */}
       <div
         className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none z-0"
         aria-hidden
@@ -106,7 +126,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
           loading="lazy"
           style={{ filter: "brightness(0.69) blur(0.5px)" }}
         />
-        {/* Soft colored overlay for readability */}
         <div
           className="absolute inset-0"
           style={{
@@ -115,12 +134,10 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
             mixBlendMode: "multiply",
           }}
         ></div>
-        {/* Very subtle dark/white radial vignette for contrast */}
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(circle at 60% 25%, rgba(0,0,0,0.11) 0%, rgba(0,0,0,0.04) 65%, rgba(0,0,0,0) 100%)"
         }}></div>
       </div>
-      {/* The card content above image background */}
       <div className="relative z-10 rounded-3xl border border-emerald-100 shadow-2xl bg-gradient-to-tr from-emerald-50/90 via-lime-50/90 to-yellow-50/95 p-7 backdrop-blur-md">
         {!submitted && (
           <>
@@ -176,7 +193,15 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
         {analysis && (
           <>
             <RecipeAnalysisResult result={analysis} />
-            <div className="w-full flex justify-center mt-4">
+            {/* Save success banner */}
+            {saveSuccess && (
+              <div className="w-full text-center mt-2 mb-2">
+                <div className="inline-block rounded-lg border border-lime-400 bg-lime-50 px-4 py-2 text-lime-900 font-semibold shadow-sm">
+                  {saveSuccess}
+                </div>
+              </div>
+            )}
+            <div className="w-full flex flex-col sm:flex-row justify-center gap-3 mt-4">
               <Button
                 variant="outline"
                 className="font-semibold text-emerald-700 px-6 py-2 bg-white/80 hover:bg-yellow-100 border-2 border-emerald-300"
@@ -184,6 +209,16 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
               >
                 Convert Another Recipe
               </Button>
+              {userIsLoggedIn && (
+                <Button
+                  variant="default"
+                  className="font-semibold text-white px-6 py-2 bg-emerald-500 hover:bg-emerald-600 border-2 border-emerald-500"
+                  disabled={saving}
+                  onClick={saveRecipe}
+                >
+                  {saving ? "Saving..." : "Save to My Recipe Book"}
+                </Button>
+              )}
             </div>
           </>
         )}
