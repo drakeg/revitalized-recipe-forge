@@ -30,18 +30,21 @@ serve(async (req: Request) => {
       });
     }
 
-    // Improved prompt to request both nutritional breakdown and healthy modifications
-    const prompt = `Analyze this recipe and provide:
-- A nutritional breakdown (calories, carbs, protein, fat, fiber, sodium, sugar, vitamins).
-- Then, suggest specific ingredient and/or instruction modifications to make this recipe healthier (e.g., reduce sugar, swap fats, increase fiber, add more vegetables, reduce sodium, etc).
-- Return your answer as clear, structured markdown, with sections titled "Nutritional Analysis" and "Suggestions to Make Healthier".
+    // Strong system prompt: nutritionist, professional food writer, clean markdown
+    const systemPrompt = `You are a nutritionist, expert healthy chef, and professional recipe writer.
+You return answers ONLY in clean, well-structured markdown suitable for recipe websites.
+Format all Markdown with clear headings, ingredient/instruction lists or tables as makes sense.`
 
-Recipe:
+    // User prompt for Deepseek: rewrite a healthier recipe, return clean label
+    const prompt = `Given the following recipe, produce a brand new, healthier version. 
+1. First, return ONLY your newly written, healthier recipe—ingredients and instructions—in standard website format (with section headings, clean lists, clear formatting).
+2. After the recipe, display a simple nutrition label covering ONLY these: Calories, Carbohydrates, Protein, Fat, Fiber, Sugar.
+    - Use a readable markdown table or clear layout, separate from the recipe.
+DO NOT include analysis, commentary, or excess text.
+
+RECIPE:
 ${title ? "Title: " + title : ""}
 ${text ? text : ""}`;
-
-    // Call Deepseek's API
-    // Reference: https://platform.deepseek.com/docs/api
 
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
@@ -52,11 +55,11 @@ ${text ? text : ""}`;
       body: JSON.stringify({
         model: "deepseek-chat",
         messages: [
-          { role: "system", content: "You are a nutritionist assistant. Return clear, well-structured, short markdown answers for recipe analysis requests." },
+          { role: "system", content: systemPrompt },
           { role: "user", content: prompt },
         ],
-        temperature: 0.2,
-        max_tokens: 800,
+        temperature: 0.25,
+        max_tokens: 1000,
       }),
     });
 
