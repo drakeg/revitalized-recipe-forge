@@ -23,6 +23,16 @@ const AuthPage: React.FC = () => {
     });
   }, [navigate]);
 
+  // Update 'username' field in 'profiles' for this user
+  const updateProfileUsername = async (userId: string, email: string) => {
+    if (!userId || !email) return;
+    // Only update if username is not set or is blank
+    await supabase
+      .from("profiles")
+      .update({ username: email })
+      .eq("id", userId);
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -31,14 +41,18 @@ const AuthPage: React.FC = () => {
 
     try {
       if (view === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+        // Update their profile username after login (self-healing if needed)
+        if (data?.user?.id) {
+          await updateProfileUsername(data.user.id, email);
+        }
       } else {
         const redirectUrl = `${window.location.origin}/`;
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -46,6 +60,10 @@ const AuthPage: React.FC = () => {
           },
         });
         if (error) throw error;
+        // On initial signup, try to set username (may fail if confirmation needed, so it's fine)
+        if (data?.user?.id) {
+          await updateProfileUsername(data.user.id, email);
+        }
         setSuccess(
           "Account created! Please check your email to confirm your address before logging in."
         );
