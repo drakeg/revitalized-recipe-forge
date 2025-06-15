@@ -1,4 +1,3 @@
-
 // This improved utility parses markdown returned by the backend into { title, ingredients, instructions, nutritionTable }.
 // Now more robust to changes in markdown heading level and stray whitespace, and strips "Healthier" from titles.
 
@@ -53,6 +52,14 @@ export function parseRecipeMarkdown(result: string) {
     }
     if (section === "instructions") {
       // Numbered or plain
+      // Filter out line/section breaks
+      if (
+        line === "---" ||
+        /^-{3,}$/.test(line) || // "---" or similar
+        /^\*{3,}$/.test(line)   // "***" or similar
+      ) {
+        continue;
+      }
       if (/^\d+\.\s+/.test(line)) {
         instructions.push(line.replace(/^\d+\.\s+/, ""));
       } else if (line && !/^#+/.test(line) && !/\|/.test(line)) {
@@ -61,7 +68,13 @@ export function parseRecipeMarkdown(result: string) {
       continue;
     }
     if (section === "nutritionLabel") {
-      if (line.includes('|')) buffer.push(line);
+      // Skip separator/markdown-only lines (like |----|----|)
+      if (
+        line.includes('|') &&
+        !/^(\s*\|?\s*-+\s*)+\|?\s*$/.test(line) // filters |----|-----| etc
+      ) {
+        buffer.push(line);
+      }
     }
   }
 
@@ -70,16 +83,22 @@ export function parseRecipeMarkdown(result: string) {
     title = title.replace(/^healthier\b\s*/i, "");
   }
 
-  // Nutrition: parse markdown table (first is headers, second is values)
+  // Nutrition: parse markdown table (first is headers, subsequent rows are values)
   if (buffer.length > 1) {
+    // Find the header row (usually first with at least one real word)
     const headerRow = buffer[0];
-    const valueRow = buffer.find(l => l !== headerRow && l.includes('|'));
-    if (headerRow && valueRow) {
-      const headers = headerRow.split('|').map(h => h.trim()).filter(Boolean);
-      const values = valueRow.split('|').map(v => v.trim()).filter(Boolean);
-      if (headers.length && values.length) {
-        nutritionTable = { headers, values };
-      }
+    // Find all value rows that aren't dashes
+    const valueRows = buffer.slice(1).filter(
+      l => l && !/^(\s*\|?\s*-+\s*)+\|?\s*$/.test(l)
+    );
+    const headers = headerRow.split('|').map(h => h.trim()).filter(Boolean);
+    // Only use the first value row for current single-valued nutrition output
+    let values: string[] = [];
+    if (valueRows.length) {
+      values = valueRows[0].split('|').map(v => v.trim()).filter(Boolean);
+    }
+    if (headers.length && values.length) {
+      nutritionTable = { headers, values };
     }
   }
 
@@ -88,4 +107,3 @@ export function parseRecipeMarkdown(result: string) {
 
   return { title, ingredients, instructions, nutritionHeader, nutritionTable };
 }
-
