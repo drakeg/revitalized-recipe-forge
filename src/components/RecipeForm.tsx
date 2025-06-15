@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import RecipeAnalysisResult from "./RecipeAnalysisResult";
@@ -113,6 +112,34 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
   let userIsLoggedIn = false;
   if (session && session.user) userIsLoggedIn = true;
 
+  // -- NEW: Track paid status --
+  const [userIsPaid, setUserIsPaid] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Only fetch is_paid status if there's a user session
+    async function fetchIsPaid() {
+      if (userIsLoggedIn && session.user.email) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("is_paid")
+          .eq("id", session.user.id)
+          .single();
+        if (!cancelled) {
+          setUserIsPaid(Boolean(data?.is_paid));
+        }
+      } else {
+        setUserIsPaid(false);
+      }
+    }
+    fetchIsPaid();
+    return () => {
+      cancelled = true;
+    };
+    // Only refetch if session.user.id changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
+
   return (
     <section className="w-full max-w-xl mx-auto relative my-10 animate-fade-in">
       <div
@@ -209,7 +236,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
               >
                 Convert Another Recipe
               </Button>
-              {userIsLoggedIn && (
+              {userIsLoggedIn && userIsPaid && (
                 <Button
                   variant="default"
                   className="font-semibold text-white px-6 py-2 bg-emerald-500 hover:bg-emerald-600 border-2 border-emerald-500"
@@ -218,6 +245,11 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
                 >
                   {saving ? "Saving..." : "Save to My Recipe Book"}
                 </Button>
+              )}
+              {userIsLoggedIn && !userIsPaid && (
+                <span className="flex items-center text-yellow-900 bg-yellow-100 px-4 py-2 rounded-md border border-yellow-300 font-semibold text-sm shadow">
+                  Paid membership required to save recipes.
+                </span>
               )}
             </div>
           </>
