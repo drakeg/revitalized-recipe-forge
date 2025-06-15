@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
+import RecipeInputSection from "./RecipeInputSection";
+import RecipeResultSection from "./RecipeResultSection";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import RecipeAnalysisResult from "./RecipeAnalysisResult";
@@ -6,7 +10,6 @@ import RecipeFormHeader from "./RecipeFormHeader";
 import RecipeTextInput from "./RecipeTextInput";
 import RecipeFileInput from "./RecipeFileInput";
 import RecipeSubmitButton from "./RecipeSubmitButton";
-import { supabase } from "@/integrations/supabase/client";
 
 // Use the supplied placeholder image as a background.
 // Picking: "photo-1618160702438-9b02ab6515c9" - black and brown round fruit on brown wooden round plate.
@@ -29,23 +32,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // NEW: Hide form after recipe has been analyzed
+  // Hide form after recipe has been analyzed
   const [submitted, setSubmitted] = useState(false);
   // Track saving state for "save" button
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      setRecipeText("");
-    }
-  };
-
-  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setRecipeText(e.target.value);
-    setFile(null);
-  };
+  const { isLoggedIn: userIsLoggedIn, isPaid: userIsPaid } = useRecipeUserStatus(session);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +79,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     }
   };
 
-  // NEW: Reset everything, show form again
+  // Reset everything, show form again
   const resetForm = () => {
     setSubmitted(false);
     setAnalysis(null);
@@ -97,7 +90,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     setSaveSuccess(null);
   };
 
-  // NEW: Save recipe dummy for now - toast/alert
+  // Save recipe dummy for now - toast/alert
   const saveRecipe = async () => {
     setSaving(true);
     setSaveSuccess(null);
@@ -107,38 +100,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
       setSaveSuccess("Recipe saved to your Recipe Book!");
     }, 850);
   };
-
-  // Check if user is logged in via session
-  let userIsLoggedIn = false;
-  if (session && session.user) userIsLoggedIn = true;
-
-  // -- NEW: Track paid status --
-  const [userIsPaid, setUserIsPaid] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    // Only fetch is_paid status if there's a user session
-    async function fetchIsPaid() {
-      if (userIsLoggedIn && session.user.email) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("is_paid")
-          .eq("id", session.user.id)
-          .single();
-        if (!cancelled) {
-          setUserIsPaid(Boolean(data?.is_paid));
-        }
-      } else {
-        setUserIsPaid(false);
-      }
-    }
-    fetchIsPaid();
-    return () => {
-      cancelled = true;
-    };
-    // Only refetch if session.user.id changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
 
   return (
     <section className="w-full max-w-xl mx-auto relative my-10 animate-fade-in">
@@ -167,92 +128,29 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
       </div>
       <div className="relative z-10 rounded-3xl border border-emerald-100 shadow-2xl bg-gradient-to-tr from-emerald-50/90 via-lime-50/90 to-yellow-50/95 p-7 backdrop-blur-md">
         {!submitted && (
-          <>
-            <RecipeFormHeader />
-            <form
-              onSubmit={handleFormSubmit}
-              className="space-y-5"
-              autoComplete="off"
-              aria-label="Recipe submission form"
-            >
-              <div>
-                <label
-                  htmlFor="recipe-title"
-                  className="block font-medium mb-1 text-green-900"
-                >
-                  Recipe Title<span className="text-destructive">*</span>
-                </label>
-                <input
-                  id="recipe-title"
-                  type="text"
-                  className="input w-full p-2 rounded-lg border mt-1 outline-none bg-background focus:ring-2 ring-emerald-400 placeholder:text-muted-foreground"
-                  placeholder="e.g. Grandma's Apple Pie"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  autoFocus
-                  maxLength={80}
-                />
-              </div>
-              <RecipeTextInput
-                value={recipeText}
-                onChange={handleTextAreaChange}
-                disabled={!!file}
-              />
-              <RecipeFileInput
-                file={file}
-                onFileChange={handleFileChange}
-                onRemove={() => setFile(null)}
-                disabled={!!recipeText}
-                acceptedFileTypes={acceptedFileTypes}
-              />
-              <RecipeSubmitButton
-                isSubmitting={isSubmitting}
-                disabled={isSubmitting || (!recipeText && !file) || !title}
-              />
-            </form>
-            {error && (
-              <div className="mt-4 text-center text-destructive text-sm font-semibold">{error}</div>
-            )}
-          </>
+          <RecipeInputSection
+            title={title}
+            setTitle={setTitle}
+            recipeText={recipeText}
+            setRecipeText={setRecipeText}
+            file={file}
+            setFile={setFile}
+            isSubmitting={isSubmitting}
+            handleFormSubmit={handleFormSubmit}
+            error={error}
+            acceptedFileTypes={acceptedFileTypes}
+          />
         )}
-        {/* Result Display */}
         {analysis && (
-          <>
-            <RecipeAnalysisResult result={analysis} />
-            {/* Save success banner */}
-            {saveSuccess && (
-              <div className="w-full text-center mt-2 mb-2">
-                <div className="inline-block rounded-lg border border-lime-400 bg-lime-50 px-4 py-2 text-lime-900 font-semibold shadow-sm">
-                  {saveSuccess}
-                </div>
-              </div>
-            )}
-            <div className="w-full flex flex-col sm:flex-row justify-center gap-3 mt-4">
-              <Button
-                variant="outline"
-                className="font-semibold text-emerald-700 px-6 py-2 bg-white/80 hover:bg-yellow-100 border-2 border-emerald-300"
-                onClick={resetForm}
-              >
-                Convert Another Recipe
-              </Button>
-              {userIsLoggedIn && userIsPaid && (
-                <Button
-                  variant="default"
-                  className="font-semibold text-white px-6 py-2 bg-emerald-500 hover:bg-emerald-600 border-2 border-emerald-500"
-                  disabled={saving}
-                  onClick={saveRecipe}
-                >
-                  {saving ? "Saving..." : "Save to My Recipe Book"}
-                </Button>
-              )}
-              {userIsLoggedIn && !userIsPaid && (
-                <span className="flex items-center text-yellow-900 bg-yellow-100 px-4 py-2 rounded-md border border-yellow-300 font-semibold text-sm shadow">
-                  Paid membership required to save recipes.
-                </span>
-              )}
-            </div>
-          </>
+          <RecipeResultSection
+            analysis={analysis}
+            saveSuccess={saveSuccess}
+            saving={saving}
+            onConvertAnother={resetForm}
+            onSave={saveRecipe}
+            userIsLoggedIn={userIsLoggedIn}
+            userIsPaid={userIsPaid}
+          />
         )}
       </div>
     </section>
