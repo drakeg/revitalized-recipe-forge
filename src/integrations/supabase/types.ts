@@ -33,6 +33,44 @@ export type Database = {
         }
         Relationships: []
       }
+      recipes: {
+        Row: {
+          analysis: string | null
+          created_at: string
+          id: string
+          original_text: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis?: string | null
+          created_at?: string
+          id?: string
+          original_text: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis?: string | null
+          created_at?: string
+          id?: string
+          original_text?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

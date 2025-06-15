@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
@@ -10,9 +11,8 @@ import RecipeFormHeader from "./RecipeFormHeader";
 import RecipeTextInput from "./RecipeTextInput";
 import RecipeFileInput from "./RecipeFileInput";
 import RecipeSubmitButton from "./RecipeSubmitButton";
+import { toast } from "@/components/ui/use-toast"; // Import toast
 
-// Use the supplied placeholder image as a background.
-// Picking: "photo-1618160702438-9b02ab6515c9" - black and brown round fruit on brown wooden round plate.
 const FOOD_BG =
   "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=800&q=80";
 
@@ -90,15 +90,52 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     setSaveSuccess(null);
   };
 
-  // Save recipe dummy for now - toast/alert
+  // Save recipe to Supabase "recipes" table
   const saveRecipe = async () => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Not Signed In",
+        description: "You need to be signed in to save recipes.",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (!title || !analysis) {
+      toast({
+        title: "Missing Data",
+        description: "Recipe title and analysis are required to save.",
+        variant: "destructive"
+      });
+      return;
+    }
     setSaving(true);
     setSaveSuccess(null);
-    // Here we’d save to the database if we had a recipe table.
-    setTimeout(() => {
-      setSaving(false);
+
+    // Insert a new recipe for the current user
+    const { error: dbError } = await supabase.from("recipes").insert([
+      {
+        user_id: session.user.id,
+        title,
+        original_text: recipeText,
+        analysis,
+      },
+    ]);
+    setSaving(false);
+    if (dbError) {
+      setSaveSuccess(null);
+      toast({
+        title: "Save Failed",
+        description: dbError.message,
+        variant: "destructive"
+      });
+    } else {
       setSaveSuccess("Recipe saved to your Recipe Book!");
-    }, 850);
+      toast({
+        title: "Recipe Saved",
+        description: "Recipe added to your personal Recipe Book.",
+        variant: "success"
+      });
+    }
   };
 
   return (
@@ -158,3 +195,4 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
 };
 
 export default RecipeForm;
+
