@@ -1,13 +1,18 @@
+
 import React, { useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import RecipeForm from "@/components/RecipeForm";
 import HowItWorks from "@/components/HowItWorks";
+import { Session, User } from "@supabase/supabase-js";
 
 // HEALTHIER: Public domain salad bowl with lots of greens
 const FOOD_BG =
   "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1500&q=80"; // salad bowl
 
-const Index = () => {
+const Index: React.FC<{
+  session?: Session | null;
+  user?: User | null;
+}> = ({ session, user }) => {
   const [imgError, setImgError] = useState(false);
   const fallbackRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +64,7 @@ const Index = () => {
       </div>
       {/* site content (above background) */}
       <div className="relative z-10 min-h-screen flex flex-col w-full bg-transparent">
-        <Navbar loggedIn={false} />
+        <Navbar loggedIn={!!session} userEmail={user?.email} />
         <main className="flex-1 flex flex-col items-center justify-center px-4 pt-6">
           <RecipeForm />
           <HowItWorks />
