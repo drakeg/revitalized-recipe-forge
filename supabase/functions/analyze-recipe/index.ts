@@ -23,9 +23,9 @@ serve(async (req: Request) => {
       });
     }
 
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiApiKey) {
-      return new Response(JSON.stringify({ error: "OpenAI API key not configured." }), {
+    const deepseekApiKey = Deno.env.get("DEEPSEEK_API_KEY");
+    if (!deepseekApiKey) {
+      return new Response(JSON.stringify({ error: "Deepseek API key not configured." }), {
         status: 500,
         headers: corsHeaders,
       });
@@ -34,15 +34,17 @@ serve(async (req: Request) => {
     // Construct the prompt
     const prompt = `Analyze this recipe and provide a nutritional breakdown (calories, carbs, protein, fat, fiber, sodium, sugar, vitamins), suitable for showing a summary to a health-conscious cook. Format your answer as a short readable markdown section. Recipe:\n${title ? "Title: " + title : ""}\n${text ? text : ""}`;
 
-    // Call OpenAI's API
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Call Deepseek's API
+    // Reference: https://platform.deepseek.com/docs/api
+
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${openaiApiKey}`,
+        "Authorization": `Bearer ${deepseekApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // fast/cheap; can upgrade if needed
+        model: "deepseek-chat",
         messages: [
           { role: "system", content: "You are a nutritionist assistant. Return clear, well-structured, short markdown answers for recipe analysis requests." },
           { role: "user", content: prompt },
@@ -54,7 +56,7 @@ serve(async (req: Request) => {
 
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.error?.message || "Error processing OpenAI request.");
+      throw new Error(data.error?.message || "Error processing Deepseek request.");
     }
 
     const result = data.choices?.[0]?.message?.content || "Analysis failed, please try again.";
@@ -63,7 +65,7 @@ serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in analyze-recipe:", error);
+    console.error("Error in analyze-recipe (Deepseek):", error);
     return new Response(
       JSON.stringify({ error: error.message || "Unexpected error." }),
       { status: 500, headers: corsHeaders }
