@@ -113,9 +113,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
         </div>
         <Button
           size="lg"
-          className="w-full font-semibold mt-2 bg-gradient-to-r from-emerald-500 via-amber-300 to-yellow-300 text-green-900 rounded-lg shadow-md hover:from-emerald-600 hover:via-amber-400 hover:to-yellow-400 transition-all"
+          className="w-full font-semibold mt-2 bg-gradient-to-r from-emerald-500 via-amber-300 to-yellow-300 text-emerald-900 shadow-[0_2px_8px_rgba(0,0,0,0.07)] rounded-lg hover:from-emerald-600 hover:via-amber-400 hover:to-yellow-400 transition-all drop-shadow"
           type="submit"
           disabled={isSubmitting || (!recipeText && !file) || !title}
+          style={{
+            textShadow: "0 1px 2px rgba(255,255,255,0.4), 0 0px 0 #fff",
+            border: "2px solid #059669", // emerald-600
+          }}
         >
           {isSubmitting ? (
             <>
@@ -123,7 +127,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
             </>
           ) : (
             <>
-              <Upload className="mr-2" size={20} /> Submit Recipe
+              <Upload className="mr-2" size={20} /> <span className="font-extrabold">Submit Recipe</span>
             </>
           )}
         </Button>
