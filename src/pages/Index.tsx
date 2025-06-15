@@ -68,30 +68,52 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-tr from-green-50 via-lime-100 to-yellow-50">
       {/* Navbar */}
-      <nav className="w-full border-b bg-card/80 z-10 backdrop-blur">
+      <nav className="w-full border-b bg-gradient-to-r from-green-400/60 via-lime-400/40 to-yellow-300/50 z-10 backdrop-blur-sm shadow-sm">
         <div className="container mx-auto flex items-center justify-between py-3 px-4">
-          <div className="font-bold text-lg tracking-tight text-primary">Revitalized Recipe Forge</div>
+          <div className="font-bold text-lg tracking-tight text-green-900 drop-shadow-sm">
+            Revitalized Recipe Forge
+          </div>
           <div className="flex items-center gap-2">
             {!loggedIn ? (
               <>
-                <Button variant="outline" size="sm" className="flex items-center gap-1" tabIndex={0}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 text-green-900 border-green-400 hover:bg-green-100"
+                  tabIndex={0}
+                >
                   <LogIn size={16} />
                   Login
                 </Button>
-                <Button variant="default" size="sm" className="flex items-center gap-1" tabIndex={0}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white"
+                  tabIndex={0}
+                >
                   <UserPlus size={16} />
                   Sign up
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" className="flex items-center gap-1" tabIndex={0}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1 text-green-900 hover:bg-yellow-100"
+                  tabIndex={0}
+                >
                   <LogOut size={16} />
                   Logout
                 </Button>
-                <Button variant="outline" size="sm" className="flex items-center gap-1" tabIndex={0}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 border-green-400 text-green-900 hover:bg-green-100"
+                  tabIndex={0}
+                >
                   My Recipes
                 </Button>
               </>
@@ -103,9 +125,13 @@ const Index = () => {
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 pt-8">
         {/* Recipe Submission Form */}
-        <section className="w-full max-w-xl bg-card/70 rounded-lg shadow p-6 mb-10">
-          <h1 className="text-3xl font-bold text-center mb-2">Submit a Recipe for Instant Analysis</h1>
-          <p className="text-muted-foreground text-center mb-6 text-base">Paste your recipe or upload a file. No account needed!</p>
+        <section className="w-full max-w-xl bg-white/90 rounded-2xl shadow-xl border border-green-200 p-6 mb-10 animate-fade-in">
+          <h1 className="text-3xl font-extrabold text-center mb-2 text-green-800 drop-shadow-sm">
+            Submit a Recipe for Instant Analysis
+          </h1>
+          <p className="text-muted-foreground text-center mb-6 text-base">
+            Paste your recipe or upload a file. No account needed!
+          </p>
           <form
             onSubmit={handleFormSubmit}
             className="space-y-5"
@@ -113,13 +139,13 @@ const Index = () => {
             aria-label="Recipe submission form"
           >
             <div>
-              <label htmlFor="recipe-title" className="block font-medium mb-1">
+              <label htmlFor="recipe-title" className="block font-medium mb-1 text-green-900">
                 Recipe Title<span className="text-destructive">*</span>
               </label>
               <input
                 id="recipe-title"
                 type="text"
-                className="input w-full p-2 rounded border mt-1 outline-none bg-background focus:ring-2 ring-primary placeholder:text-muted-foreground"
+                className="input w-full p-2 rounded-lg border mt-1 outline-none bg-background focus:ring-2 ring-green-400 placeholder:text-muted-foreground"
                 placeholder="e.g. Grandma's Apple Pie"
                 required
                 value={title}
@@ -129,12 +155,13 @@ const Index = () => {
               />
             </div>
             <div>
-              <label htmlFor="recipe-text" className="block font-medium mb-1">
-                Paste Recipe Text<span className="text-muted-foreground ml-2">(or use file upload below)</span>
+              <label htmlFor="recipe-text" className="block font-medium mb-1 text-green-900">
+                Paste Recipe Text
+                <span className="text-muted-foreground ml-2">(or use file upload below)</span>
               </label>
               <textarea
                 id="recipe-text"
-                className="input w-full min-h-[100px] p-2 rounded border mt-1 outline-none bg-background focus:ring-2 ring-primary placeholder:text-muted-foreground"
+                className="input w-full min-h-[100px] p-2 rounded-lg border mt-1 outline-none bg-background focus:ring-2 ring-green-400 placeholder:text-muted-foreground"
                 placeholder="Paste your recipe here..."
                 value={recipeText}
                 onChange={handleTextAreaChange}
@@ -143,7 +170,7 @@ const Index = () => {
               />
             </div>
             <div>
-              <label htmlFor="recipe-file" className="block font-medium mb-1">
+              <label htmlFor="recipe-file" className="block font-medium mb-1 text-green-900">
                 Upload Recipe File
                 <span className="text-muted-foreground ml-2">(PDF, DOC, DOCX, TXT)</span>
               </label>
@@ -151,7 +178,7 @@ const Index = () => {
                 id="recipe-file"
                 type="file"
                 accept={acceptedFileTypes}
-                className="block w-full text-sm file:bg-primary file:text-primary-foreground file:rounded file:border-none file:py-2 file:px-4 file:font-medium"
+                className="block w-full text-sm file:bg-green-500 file:text-white file:rounded file:border-none file:py-2 file:px-4 file:font-medium file:cursor-pointer"
                 onChange={handleFileChange}
                 disabled={!!recipeText}
               />
@@ -161,7 +188,7 @@ const Index = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="ml-2 px-2 py-0 text-xs"
+                    className="ml-2 px-2 py-0 text-xs text-green-800 hover:bg-yellow-100"
                     type="button"
                     onClick={() => setFile(null)}
                   >
@@ -172,7 +199,7 @@ const Index = () => {
             </div>
             <Button
               size="lg"
-              className="w-full font-semibold mt-2"
+              className="w-full font-semibold mt-2 bg-gradient-to-r from-green-500 via-lime-400 to-yellow-300 text-green-900 rounded-lg shadow hover:from-green-600 hover:via-lime-500 hover:to-yellow-400"
               type="submit"
               disabled={isSubmitting || (!recipeText && !file) || !title}
             >
@@ -183,12 +210,17 @@ const Index = () => {
 
         {/* How it Works */}
         <section className="w-full max-w-3xl mb-14">
-          <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center">How it Works</h2>
+          <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center text-green-700 drop-shadow">
+            How it Works
+          </h2>
           <div className="flex flex-col md:flex-row justify-center items-stretch gap-6">
             {steps.map((step, idx) => (
-              <Card key={idx} className="flex-1 flex flex-col items-center p-6 text-center">
+              <Card
+                key={idx}
+                className="flex-1 flex flex-col items-center p-6 text-center border-2 border-lime-300 shadow-lg rounded-xl bg-white/80 hover:bg-lime-50 transition-all duration-200 hover:scale-105"
+              >
                 <div className="mb-3">{step.icon}</div>
-                <CardTitle className="mb-1 text-base">{step.title}</CardTitle>
+                <CardTitle className="mb-1 text-base text-green-900">{step.title}</CardTitle>
                 <CardDescription>{step.text}</CardDescription>
               </Card>
             ))}
