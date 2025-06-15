@@ -133,7 +133,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
       toast({
         title: "Recipe Saved",
         description: "Recipe added to your personal Recipe Book.",
-        variant: "success"
+        variant: "default" // Fix: use 'default', not 'success'
       });
     }
   };
