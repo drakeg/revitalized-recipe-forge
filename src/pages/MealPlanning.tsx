@@ -4,14 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Plus, ChefHat } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
 import MealPlanList from "@/components/meal-planning/MealPlanList";
 import CreateMealPlanModal from "@/components/meal-planning/CreateMealPlanModal";
 import PremiumFeatureGate from "@/components/PremiumFeatureGate";
+import MealPlanningHeader from "@/components/meal-planning/MealPlanningHeader";
+import MealPlanningActions from "@/components/meal-planning/MealPlanningActions";
+import MealPlanningEmpty from "@/components/meal-planning/MealPlanningEmpty";
+import MealPlanningLoadingState from "@/components/meal-planning/MealPlanningLoadingState";
 
 interface MealPlan {
   id: string;
@@ -90,6 +91,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     }
   };
 
+  // Redirect to auth if not logged in
   if (!session?.user) {
     return null;
   }
@@ -100,16 +102,13 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto"></div>
-            <p className="text-emerald-600 mt-2">Checking your subscription status...</p>
-          </div>
+          <MealPlanningLoadingState message="Checking your subscription status..." />
         </div>
       </div>
     );
   }
 
-  // Show premium gate if user is not paid
+  // Show premium gate if user is logged in but not paid
   if (isLoggedIn && !isPaid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
@@ -128,52 +127,17 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
       <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
       
       <main className="container mx-auto px-4 py-8">        
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-emerald-800 mb-2 flex items-center gap-2">
-            <Calendar className="w-8 h-8" />
-            Meal Planning
-          </h1>
-          <p className="text-emerald-600">
-            Plan your meals for the week and generate shopping lists
-          </p>
-        </div>
+        <MealPlanningHeader />
 
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-2xl font-semibold text-emerald-800">
-            Your Meal Plans ({mealPlans.length})
-          </h2>
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Create Meal Plan
-          </Button>
-        </div>
+        <MealPlanningActions 
+          mealPlansCount={mealPlans.length}
+          onCreateClick={() => setShowCreateModal(true)}
+        />
 
         {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto"></div>
-            <p className="text-emerald-600 mt-2">Loading meal plans...</p>
-          </div>
+          <MealPlanningLoadingState message="Loading meal plans..." />
         ) : mealPlans.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <ChefHat className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-emerald-800 mb-2">
-                No meal plans yet
-              </h3>
-              <p className="text-emerald-600 mb-4">
-                Create your first meal plan to get started with organized meal planning!
-              </p>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white"
-              >
-                Create Your First Meal Plan
-              </Button>
-            </CardContent>
-          </Card>
+          <MealPlanningEmpty onCreateClick={() => setShowCreateModal(true)} />
         ) : (
           <MealPlanList 
             mealPlans={mealPlans} 

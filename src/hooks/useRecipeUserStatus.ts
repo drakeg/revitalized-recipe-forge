@@ -14,8 +14,12 @@ export function useRecipeUserStatus(session?: any) {
     const userLoggedIn = !!(session?.user?.id);
     setIsLoggedIn(userLoggedIn);
     
+    console.log("useRecipeUserStatus - User logged in:", userLoggedIn);
+    console.log("useRecipeUserStatus - Session user ID:", session?.user?.id);
+    
     async function fetchIsPaid() {
       if (!userLoggedIn || !session?.user?.id) {
+        console.log("useRecipeUserStatus - No user, setting isPaid to false");
         if (!cancelled) {
           setIsPaid(false);
           setLoading(false);
@@ -24,6 +28,8 @@ export function useRecipeUserStatus(session?: any) {
       }
 
       try {
+        console.log("useRecipeUserStatus - Fetching profile for user:", session.user.id);
+        
         // Fetch user's paid status from profiles table
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
@@ -31,8 +37,11 @@ export function useRecipeUserStatus(session?: any) {
           .eq("id", session.user.id)
           .single();
         
+        console.log("useRecipeUserStatus - Profile data:", profileData);
+        console.log("useRecipeUserStatus - Profile error:", profileError);
+        
         if (profileError) {
-          console.error("Error fetching profile:", profileError);
+          console.error("useRecipeUserStatus - Error fetching profile:", profileError);
           if (!cancelled) {
             setIsPaid(false);
             setLoading(false);
@@ -40,12 +49,15 @@ export function useRecipeUserStatus(session?: any) {
           return;
         }
 
+        const paidStatus = Boolean(profileData?.is_paid);
+        console.log("useRecipeUserStatus - Paid status:", paidStatus);
+        
         if (!cancelled) {
-          setIsPaid(Boolean(profileData?.is_paid));
+          setIsPaid(paidStatus);
           setLoading(false);
         }
       } catch (err) {
-        console.error("Exception fetching paid status:", err);
+        console.error("useRecipeUserStatus - Exception fetching paid status:", err);
         if (!cancelled) {
           setIsPaid(false);
           setLoading(false);
@@ -57,5 +69,7 @@ export function useRecipeUserStatus(session?: any) {
     return () => { cancelled = true; };
   }, [session?.user?.id]);
 
+  console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
+  
   return { isLoggedIn, isPaid, loading };
 }
