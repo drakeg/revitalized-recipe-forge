@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
@@ -11,7 +10,7 @@ import RecipeFormHeader from "./RecipeFormHeader";
 import RecipeTextInput from "./RecipeTextInput";
 import RecipeFileInput from "./RecipeFileInput";
 import RecipeSubmitButton from "./RecipeSubmitButton";
-import { toast } from "@/components/ui/use-toast"; // Import toast
+import { toast } from "@/hooks/use-toast";
 
 const FOOD_BG =
   "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=800&q=80";
@@ -40,6 +39,31 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
 
   const { isLoggedIn: userIsLoggedIn, isPaid: userIsPaid } = useRecipeUserStatus(session);
 
+  const uploadFile = async (file: File): Promise<string | null> => {
+    if (!session?.user?.id) {
+      throw new Error("User must be logged in to upload files");
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('recipe-files')
+      .upload(fileName, file);
+
+    if (error) {
+      console.error('File upload error:', error);
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
+
+    // Get the public URL for the uploaded file
+    const { data: urlData } = supabase.storage
+      .from('recipe-files')
+      .getPublicUrl(fileName);
+
+    return urlData.publicUrl;
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -47,13 +71,34 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     setAnalysis(null);
 
     try {
-      if (recipeText && recipeText.length > 0) {
+      let fileUrl: string | null = null;
+      let textToAnalyze = recipeText;
+
+      // Handle file upload if a file is selected
+      if (file) {
+        if (!session?.user?.id) {
+          setError("You must be logged in to upload files.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        fileUrl = await uploadFile(file);
+        
+        // For now, we'll show a message that file processing isn't ready
+        // In the future, you could extract text from the file here
+        setError("File uploaded successfully! However, automatic text extraction from files is not yet implemented. Please copy and paste your recipe text for analysis.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Analyze the recipe text
+      if (textToAnalyze && textToAnalyze.length > 0) {
         const response = await fetch(
           "https://xvtfkjjvzjjwpgrwteem.functions.supabase.co/analyze-recipe",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, text: recipeText }),
+            body: JSON.stringify({ title, text: textToAnalyze }),
           }
         );
         const resJson = await response.json();
@@ -65,13 +110,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
           setSubmitted(true); // Hide the form
         }
       } else {
-        setError("Uploading and analyzing files will be supported soon. Please paste recipe text for now.");
+        setError("Please provide recipe text to analyze.");
       }
+      
       setIsSubmitting(false);
       setTitle("");
       setRecipeText("");
       setFile(null);
-      if (onSubmit) onSubmit({ title, text: recipeText, file });
+      if (onSubmit) onSubmit({ title, text: textToAnalyze, file });
     } catch (err: any) {
       setIsSubmitting(false);
       setError(err.message || "Unexpected error while analyzing.");
@@ -118,6 +164,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
         title,
         original_text: recipeText,
         analysis,
+        file_url: null, // Will be populated when file processing is implemented
       },
     ]);
     setSaving(false);
@@ -133,7 +180,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
       toast({
         title: "Recipe Saved",
         description: "Recipe added to your personal Recipe Book.",
-        variant: "default" // Fix: use 'default', not 'success'
+        variant: "default"
       });
     }
   };
@@ -195,4 +242,3 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
 };
 
 export default RecipeForm;
-
