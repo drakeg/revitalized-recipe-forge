@@ -49,27 +49,6 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
     fetchShoppingLists();
   }, [session, navigate]);
 
-  // Show premium gate if user is not paid
-  if (!statusLoading && isLoggedIn && !isPaid) {
-    console.log("Showing premium gate because: statusLoading=", statusLoading, "isLoggedIn=", isLoggedIn, "isPaid=", isPaid);
-    return (
-      <>
-        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
-        <PremiumFeatureGate 
-          featureName="Shopping Lists"
-          description="Create and manage your shopping lists, automatically generate them from your meal plans, and organize your grocery shopping efficiently."
-        />
-      </>
-    );
-  }
-
-  // Debug: Log when we should show the main content
-  console.log("ShoppingLists - Should show main content:", {
-    condition1: statusLoading, // if true, we're still loading
-    condition2: !statusLoading && isLoggedIn && !isPaid, // if true, show premium gate
-    condition3: !statusLoading && isLoggedIn && isPaid // if true, show main content
-  });
-
   const fetchShoppingLists = async () => {
     try {
       const { data, error } = await supabase
@@ -122,6 +101,36 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
     return null;
   }
 
+  // Show loading state while checking user status
+  if (statusLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
+        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto"></div>
+            <p className="text-emerald-600 mt-2">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show premium gate if user is not paid
+  if (isLoggedIn && !isPaid) {
+    console.log("Showing premium gate because user is not paid");
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
+        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
+        <PremiumFeatureGate 
+          featureName="Shopping Lists"
+          description="Create and manage your shopping lists, automatically generate them from your meal plans, and organize your grocery shopping efficiently."
+        />
+      </div>
+    );
+  }
+
+  // Main content for paid users
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
       <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
