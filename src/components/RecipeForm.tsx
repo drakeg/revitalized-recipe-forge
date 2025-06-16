@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
@@ -36,6 +37,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
   // Track saving state for "save" button
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  // Store file URL for saving to database
+  const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
 
   const { isLoggedIn: userIsLoggedIn, isPaid: userIsPaid } = useRecipeUserStatus(session);
 
@@ -83,22 +86,22 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
         }
 
         fileUrl = await uploadFile(file);
-        
-        // For now, we'll show a message that file processing isn't ready
-        // In the future, you could extract text from the file here
-        setError("File uploaded successfully! However, automatic text extraction from files is not yet implemented. Please copy and paste your recipe text for analysis.");
-        setIsSubmitting(false);
-        return;
+        setCurrentFileUrl(fileUrl);
+        console.log("File uploaded successfully:", fileUrl);
       }
 
-      // Analyze the recipe text
-      if (textToAnalyze && textToAnalyze.length > 0) {
+      // Analyze the recipe (either from text or file)
+      if (textToAnalyze || fileUrl) {
         const response = await fetch(
           "https://xvtfkjjvzjjwpgrwteem.functions.supabase.co/analyze-recipe",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, text: textToAnalyze }),
+            body: JSON.stringify({ 
+              title, 
+              text: textToAnalyze,
+              fileUrl: fileUrl 
+            }),
           }
         );
         const resJson = await response.json();
@@ -108,15 +111,17 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
         } else {
           setAnalysis(resJson.result);
           setSubmitted(true); // Hide the form
+          
+          // If we got extracted text from the file, update our state
+          if (resJson.extractedText) {
+            setRecipeText(resJson.extractedText);
+          }
         }
       } else {
-        setError("Please provide recipe text to analyze.");
+        setError("Please provide recipe text or upload a file to analyze.");
       }
       
       setIsSubmitting(false);
-      setTitle("");
-      setRecipeText("");
-      setFile(null);
       if (onSubmit) onSubmit({ title, text: textToAnalyze, file });
     } catch (err: any) {
       setIsSubmitting(false);
@@ -134,6 +139,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     setRecipeText("");
     setFile(null);
     setSaveSuccess(null);
+    setCurrentFileUrl(null);
   };
 
   // Save recipe to Supabase "recipes" table
@@ -164,7 +170,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
         title,
         original_text: recipeText,
         analysis,
-        file_url: null, // Will be populated when file processing is implemented
+        file_url: currentFileUrl,
       },
     ]);
     setSaving(false);
