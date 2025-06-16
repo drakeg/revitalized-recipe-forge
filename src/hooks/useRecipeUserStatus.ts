@@ -10,16 +10,29 @@ export function useRecipeUserStatus(session?: any) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setIsLoggedIn(!!(session && session.user));
+    
+    const userLoggedIn = !!(session && session.user);
+    setIsLoggedIn(userLoggedIn);
+    
+    console.log("useRecipeUserStatus - Debug:", {
+      sessionExists: !!session,
+      userExists: !!session?.user,
+      userId: session?.user?.id,
+      userLoggedIn
+    });
     
     async function fetchIsPaid() {
       if (session?.user?.id) {
         try {
+          console.log("Fetching paid status for user:", session.user.id);
+          
           const { data, error } = await supabase
             .from("profiles")
             .select("is_paid")
             .eq("id", session.user.id)
             .single();
+          
+          console.log("Profiles query result:", { data, error });
           
           if (!cancelled && !error) {
             console.log("User paid status:", data?.is_paid);
@@ -35,6 +48,7 @@ export function useRecipeUserStatus(session?: any) {
           }
         }
       } else {
+        console.log("No user ID found, setting isPaid to false");
         setIsPaid(false);
       }
       
@@ -45,7 +59,9 @@ export function useRecipeUserStatus(session?: any) {
     
     fetchIsPaid();
     return () => { cancelled = true; };
-  }, [session?.user?.id, session?.user]); // Also depend on session.user to catch updates
+  }, [session?.user?.id, session?.user]);
+
+  console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
 
   return { isLoggedIn, isPaid, loading };
 }
