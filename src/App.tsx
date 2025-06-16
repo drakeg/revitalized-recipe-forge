@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import React, { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import MealPlanning from "./pages/MealPlanning";
+import ShoppingLists from "./pages/ShoppingLists";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +118,22 @@ const App = () => {
               element={
                 <RequireAuth>
                   <Dashboard session={session} />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/meal-planning"
+              element={
+                <RequireAuth>
+                  <MealPlanning session={session} />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/shopping-lists"
+              element={
+                <RequireAuth>
+                  <ShoppingLists session={session} />
                 </RequireAuth>
               }
             />

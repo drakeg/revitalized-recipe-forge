@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, UserPlus, LayoutDashboard } from "lucide-react";
+import { LogIn, LogOut, UserPlus, LayoutDashboard, Calendar, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { secureSignOut } from "@/utils/authUtils";
 
@@ -61,6 +61,24 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
               >
                 <LayoutDashboard size={16} />
                 Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
+                onClick={() => navigate("/meal-planning")}
+              >
+                <Calendar size={16} />
+                Meal Plans
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
+                onClick={() => navigate("/shopping-lists")}
+              >
+                <ShoppingCart size={16} />
+                Shopping
               </Button>
               <Button
                 variant="ghost"
