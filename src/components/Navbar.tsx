@@ -77,15 +77,17 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session }) => {
                 {userEmail}
                 {!loading && isPaid && <Badge className="bg-yellow-500 text-yellow-900"><Crown size={12} /> Pro</Badge>}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
-                onClick={() => navigate("/dashboard")}
-              >
-                <LayoutDashboard size={16} />
-                Dashboard
-              </Button>
+              {!loading && isPaid && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
