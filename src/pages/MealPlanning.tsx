@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -118,10 +117,9 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     );
   }
 
-  // SIMPLIFIED: If user has session and status is not loading, check if they're paid
-  // If not paid, show premium gate
-  if (!isPaid) {
-    console.log("MealPlanning - User not paid, showing premium gate", { isPaid, isLoggedIn });
+  // FIXED: Only show premium gate if status is loaded AND user is not paid
+  if (!statusLoading && !isPaid) {
+    console.log("MealPlanning - User not paid (status loaded), showing premium gate", { isPaid, isLoggedIn, statusLoading });
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
