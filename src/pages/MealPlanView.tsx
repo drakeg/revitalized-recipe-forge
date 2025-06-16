@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -32,6 +31,8 @@ const MealPlanView: React.FC<MealPlanViewProps> = ({ session }) => {
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddRecipeModal, setShowAddRecipeModal] = useState(false);
+  const [preselectedDate, setPreselectedDate] = useState<string>("");
+  const [preselectedMealType, setPreselectedMealType] = useState<string>("");
 
   useEffect(() => {
     if (!session?.user) {
@@ -65,6 +66,23 @@ const MealPlanView: React.FC<MealPlanViewProps> = ({ session }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddRecipe = (date?: string, mealType?: string) => {
+    if (date && mealType) {
+      setPreselectedDate(date);
+      setPreselectedMealType(mealType);
+    } else {
+      setPreselectedDate("");
+      setPreselectedMealType("");
+    }
+    setShowAddRecipeModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddRecipeModal(false);
+    setPreselectedDate("");
+    setPreselectedMealType("");
   };
 
   const handleGenerateShoppingList = async () => {
@@ -218,7 +236,7 @@ const MealPlanView: React.FC<MealPlanViewProps> = ({ session }) => {
                 Generate Shopping List
               </Button>
               <Button
-                onClick={() => setShowAddRecipeModal(true)}
+                onClick={() => handleAddRecipe()}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -237,16 +255,19 @@ const MealPlanView: React.FC<MealPlanViewProps> = ({ session }) => {
               mealPlanId={id!} 
               startDate={mealPlan.start_date}
               endDate={mealPlan.end_date}
+              onAddRecipe={handleAddRecipe}
             />
           </CardContent>
         </Card>
 
         <AddRecipeToMealPlanModal
           isOpen={showAddRecipeModal}
-          onClose={() => setShowAddRecipeModal(false)}
+          onClose={handleCloseModal}
           mealPlanId={id!}
           startDate={mealPlan.start_date}
           endDate={mealPlan.end_date}
+          preselectedDate={preselectedDate}
+          preselectedMealType={preselectedMealType}
         />
       </main>
     </div>

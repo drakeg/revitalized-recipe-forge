@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,8 @@ interface AddRecipeToMealPlanModalProps {
   mealPlanId: string;
   startDate: string;
   endDate: string;
+  preselectedDate?: string;
+  preselectedMealType?: string;
 }
 
 const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
@@ -30,6 +31,8 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
   mealPlanId,
   startDate,
   endDate,
+  preselectedDate,
+  preselectedMealType,
 }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
@@ -44,10 +47,11 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       fetchRecipes();
-      // Set default date to start date
-      setMealDate(startDate);
+      // Set date and meal type based on props
+      setMealDate(preselectedDate || startDate);
+      setMealType(preselectedMealType || "");
     }
-  }, [isOpen, startDate]);
+  }, [isOpen, startDate, preselectedDate, preselectedMealType]);
 
   useEffect(() => {
     const filtered = recipes.filter(recipe =>
@@ -107,8 +111,8 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
 
       // Reset form
       setSelectedRecipe("");
-      setMealDate(startDate);
-      setMealType("");
+      setMealDate(preselectedDate || startDate);
+      setMealType(preselectedMealType || "");
       setServings("1");
       onClose();
     } catch (error: any) {
