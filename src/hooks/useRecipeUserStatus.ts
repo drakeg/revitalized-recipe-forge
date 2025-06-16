@@ -14,25 +14,38 @@ export function useRecipeUserStatus(session?: any) {
     
     async function fetchIsPaid() {
       if (session?.user?.id) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("is_paid")
-          .eq("id", session.user.id)
-          .single();
-        if (!cancelled) {
-          setIsPaid(Boolean(data?.is_paid));
-          setLoading(false);
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("is_paid")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (!cancelled && !error) {
+            console.log("User paid status:", data?.is_paid);
+            setIsPaid(Boolean(data?.is_paid));
+          } else if (error) {
+            console.error("Error fetching paid status:", error);
+            setIsPaid(false);
+          }
+        } catch (err) {
+          console.error("Exception fetching paid status:", err);
+          if (!cancelled) {
+            setIsPaid(false);
+          }
         }
       } else {
         setIsPaid(false);
+      }
+      
+      if (!cancelled) {
         setLoading(false);
       }
     }
+    
     fetchIsPaid();
     return () => { cancelled = true; };
-    // Only refetch if session.user.id changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
+  }, [session?.user?.id, session?.user]); // Also depend on session.user to catch updates
 
   return { isLoggedIn, isPaid, loading };
 }
