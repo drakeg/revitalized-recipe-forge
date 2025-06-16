@@ -30,6 +30,7 @@ const MealPlanView: React.FC<MealPlanViewProps> = ({ session }) => {
   const { toast } = useToast();
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const {
     showAddRecipeModal,
@@ -74,6 +75,15 @@ const MealPlanView: React.FC<MealPlanViewProps> = ({ session }) => {
     }
   };
 
+  const handleRecipeAdded = () => {
+    // Trigger a refresh of the calendar
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleModalClose = () => {
+    handleCloseModal();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
@@ -114,18 +124,20 @@ const MealPlanView: React.FC<MealPlanViewProps> = ({ session }) => {
               startDate={mealPlan.start_date}
               endDate={mealPlan.end_date}
               onAddRecipe={handleAddRecipe}
+              refreshTrigger={refreshTrigger}
             />
           </CardContent>
         </Card>
 
         <AddRecipeToMealPlanModal
           isOpen={showAddRecipeModal}
-          onClose={handleCloseModal}
+          onClose={handleModalClose}
           mealPlanId={id!}
           startDate={mealPlan.start_date}
           endDate={mealPlan.end_date}
           preselectedDate={preselectedDate}
           preselectedMealType={preselectedMealType}
+          onRecipeAdded={handleRecipeAdded}
         />
       </main>
     </div>

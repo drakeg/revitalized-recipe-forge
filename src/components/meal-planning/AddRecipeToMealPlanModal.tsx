@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ interface AddRecipeToMealPlanModalProps {
   endDate: string;
   preselectedDate?: string;
   preselectedMealType?: string;
+  onRecipeAdded?: () => void;
 }
 
 const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
@@ -33,6 +35,7 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
   endDate,
   preselectedDate,
   preselectedMealType,
+  onRecipeAdded,
 }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
@@ -50,6 +53,9 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
       // Set date and meal type based on props
       setMealDate(preselectedDate || startDate);
       setMealType(preselectedMealType || "");
+      setSelectedRecipe("");
+      setSearchTerm("");
+      setServings("1");
     }
   }, [isOpen, startDate, preselectedDate, preselectedMealType]);
 
@@ -81,10 +87,20 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRecipe || !mealDate || !mealType) {
+    
+    if (!selectedRecipe || !mealDate || !mealType || !servings) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (parseInt(servings) < 1) {
+      toast({
+        title: "Error",
+        description: "Servings must be at least 1",
         variant: "destructive",
       });
       return;
@@ -114,8 +130,16 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
       setMealDate(preselectedDate || startDate);
       setMealType(preselectedMealType || "");
       setServings("1");
+      setSearchTerm("");
+      
+      // Notify parent component to refresh
+      if (onRecipeAdded) {
+        onRecipeAdded();
+      }
+      
       onClose();
     } catch (error: any) {
+      console.error("Error adding recipe to meal plan:", error);
       toast({
         title: "Error",
         description: "Failed to add recipe: " + error.message,
@@ -126,8 +150,17 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    setSelectedRecipe("");
+    setSearchTerm("");
+    setMealDate(preselectedDate || startDate);
+    setMealType(preselectedMealType || "");
+    setServings("1");
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Recipe to Meal Plan</DialogTitle>
@@ -149,7 +182,9 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
 
           <div className="max-h-48 overflow-y-auto border rounded-md p-2">
             {filteredRecipes.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No recipes found</p>
+              <p className="text-gray-500 text-center py-4">
+                {recipes.length === 0 ? "No recipes found. Create some recipes first!" : "No recipes match your search"}
+              </p>
             ) : (
               <div className="space-y-2">
                 {filteredRecipes.map((recipe) => (
@@ -171,7 +206,7 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="meal_date">Date</Label>
+              <Label htmlFor="meal_date">Date *</Label>
               <Input
                 id="meal_date"
                 type="date"
@@ -183,7 +218,7 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
               />
             </div>
             <div>
-              <Label htmlFor="servings">Servings</Label>
+              <Label htmlFor="servings">Servings *</Label>
               <Input
                 id="servings"
                 type="number"
@@ -196,7 +231,7 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="meal_type">Meal Type</Label>
+            <Label htmlFor="meal_type">Meal Type *</Label>
             <Select value={mealType} onValueChange={setMealType} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select meal type" />
@@ -211,13 +246,13 @@ const AddRecipeToMealPlanModal: React.FC<AddRecipeToMealPlanModalProps> = ({
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
               Cancel
             </Button>
             <Button 
               type="submit" 
               className="flex-1 bg-emerald-500 hover:bg-emerald-600"
-              disabled={loading || !selectedRecipe}
+              disabled={loading || !selectedRecipe || !mealDate || !mealType}
             >
               {loading ? "Adding..." : "Add Recipe"}
             </Button>

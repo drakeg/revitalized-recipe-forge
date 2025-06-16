@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface MealPlanCalendarProps {
   startDate: string;
   endDate: string;
   onAddRecipe?: (date: string, mealType: string) => void;
+  refreshTrigger?: number;
 }
 
 const MealPlanCalendar: React.FC<MealPlanCalendarProps> = ({
@@ -33,6 +35,7 @@ const MealPlanCalendar: React.FC<MealPlanCalendarProps> = ({
   startDate,
   endDate,
   onAddRecipe,
+  refreshTrigger,
 }) => {
   const [mealPlanItems, setMealPlanItems] = useState<MealPlanItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,10 +52,11 @@ const MealPlanCalendar: React.FC<MealPlanCalendarProps> = ({
 
   useEffect(() => {
     fetchMealPlanItems();
-  }, [mealPlanId]);
+  }, [mealPlanId, refreshTrigger]);
 
   const fetchMealPlanItems = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from("meal_plan_items")
         .select(`
@@ -65,6 +69,7 @@ const MealPlanCalendar: React.FC<MealPlanCalendarProps> = ({
       if (error) throw error;
       setMealPlanItems(data || []);
     } catch (error: any) {
+      console.error("Error fetching meal plan items:", error);
       toast({
         title: "Error",
         description: "Failed to load meal plan items: " + error.message,
