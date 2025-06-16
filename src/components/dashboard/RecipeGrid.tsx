@@ -44,7 +44,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
   const [shareRecipe, setShareRecipe] = useState<Recipe | null>(null);
   const [categoryManagerRecipe, setCategoryManagerRecipe] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categories, setCategories] = useState<Category[]>([]);
   const [recipeCategories, setRecipeCategories] = useState<Record<string, Category[]>>({});
   const { toast } = useToast();
@@ -98,14 +98,14 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
 
   const filteredRecipes = recipes.filter((recipe) => {
     const matchesSearch = recipe.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || 
+    const matchesCategory = selectedCategory === "all" || 
       recipeCategories[recipe.id]?.some(cat => cat.id === selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
   const clearFilters = () => {
     setSearchTerm("");
-    setSelectedCategory("");
+    setSelectedCategory("all");
   };
 
   if (loading) {
@@ -147,7 +147,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
           </Select>
         </div>
         
-        {(searchTerm || selectedCategory) && (
+        {(searchTerm || selectedCategory !== "all") && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">
               Showing {filteredRecipes.length} of {recipes.length} recipes
@@ -255,12 +255,12 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
       {filteredRecipes.length === 0 && !loading && (
         <div className="text-center py-12">
           <p className="text-emerald-600 text-lg">
-            {searchTerm || selectedCategory 
+            {searchTerm || selectedCategory !== "all"
               ? "No recipes match your current filters" 
               : "No recipes found"
             }
           </p>
-          {(searchTerm || selectedCategory) && (
+          {(searchTerm || selectedCategory !== "all") && (
             <Button
               variant="outline"
               onClick={clearFilters}
@@ -286,6 +286,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
           recipe={shareRecipe}
           isOpen={!!shareRecipe}
           onClose={() => setShareRecipe(null)}
+          onRefresh={onRefresh}
         />
       )}
 
