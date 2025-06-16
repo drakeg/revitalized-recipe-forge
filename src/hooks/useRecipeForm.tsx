@@ -55,30 +55,47 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
       }
 
       if (textToAnalyze || fileUrl || url) {
+        // Get current session if it exists
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         const headers: Record<string, string> = {
           "Content-Type": "application/json"
         };
 
+        // Add auth header if user is logged in, but don't require it
         if (currentSession?.access_token) {
           headers["Authorization"] = `Bearer ${currentSession.access_token}`;
         }
+
+        // Add a flag to indicate this is an anonymous request
+        const requestBody: any = { 
+          title, 
+          text: textToAnalyze,
+          fileUrl: fileUrl,
+          url: url,
+          isAnonymous: !currentSession?.user?.id
+        };
+
+        console.log("Sending recipe analysis request:", { 
+          hasSession: !!currentSession?.user?.id,
+          isAnonymous: !currentSession?.user?.id,
+          hasFile: !!fileUrl,
+          hasText: !!textToAnalyze,
+          hasUrl: !!url
+        });
 
         const response = await fetch(
           "https://xvtfkjjvzjjwpgrwteem.functions.supabase.co/analyze-recipe",
           {
             method: "POST",
             headers,
-            body: JSON.stringify({ 
-              title, 
-              text: textToAnalyze,
-              fileUrl: fileUrl,
-              url: url 
-            }),
+            body: JSON.stringify(requestBody),
           }
         );
+        
         const resJson = await response.json();
+        console.log("Recipe analysis response:", { status: response.status, resJson });
+        
         if (!response.ok || resJson.error) {
           if (resJson.suggestion === "copy_paste" || resJson.suggestion === "shorten_text") {
             setError(
@@ -108,8 +125,9 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
       setIsSubmitting(false);
       if (onSubmit) onSubmit({ title, text: textToAnalyze, file, url });
     } catch (err: any) {
+      console.error("Error in handleFormSubmit:", err);
       setIsSubmitting(false);
-      setError(err.message || "Unexpected error while analyzing.");
+      setError(err.message || "Unexpected error while analyzing. Please try again.");
       setAnalysis(null);
     }
   };
