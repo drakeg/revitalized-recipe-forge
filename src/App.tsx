@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,8 +111,14 @@ const App = () => {
               }
             />
             <Route path="/auth" element={<AuthPage />} />
-            {/* Example: Any route below is protected (add real protected routes as needed) */}
-            {/* <Route path="/my-protected-page" element={<RequireAuth><ProtectedComponent /></RequireAuth>} /> */}
+            <Route
+              path="/dashboard"
+              element={
+                <RequireAuth>
+                  <Dashboard session={session} />
+                </RequireAuth>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

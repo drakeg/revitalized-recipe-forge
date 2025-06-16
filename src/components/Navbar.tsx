@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, UserPlus } from "lucide-react";
+import { LogIn, LogOut, UserPlus, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { secureSignOut } from "@/utils/authUtils";
 
@@ -20,7 +20,10 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
   return (
     <nav className="w-full bg-gradient-to-r from-emerald-400/80 via-lime-200/70 to-yellow-100/90 border-b shadow-sm backdrop-blur">
       <div className="container mx-auto flex items-center justify-between py-3 px-4">
-        <div className="font-bold text-lg tracking-tight text-green-900 drop-shadow-sm flex gap-1 items-center">
+        <div 
+          className="font-bold text-lg tracking-tight text-green-900 drop-shadow-sm flex gap-1 items-center cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           <span className="text-2xl">🍃</span> Revitalized Recipe Forge
         </div>
         <div className="flex items-center gap-2">
@@ -51,6 +54,15 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
                 {userEmail}
               </span>
               <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
+                onClick={() => navigate("/dashboard")}
+              >
+                <LayoutDashboard size={16} />
+                Dashboard
+              </Button>
+              <Button
                 variant="ghost"
                 size="sm"
                 className="flex items-center gap-1 text-emerald-900 hover:bg-yellow-100/80"
@@ -58,14 +70,6 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
               >
                 <LogOut size={16} />
                 Logout
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
-                disabled
-              >
-                My Recipes
               </Button>
             </>
           )}
