@@ -12,10 +12,12 @@ export function useRecipeUserStatus(session?: any) {
     
     // Check if user is logged in
     const userLoggedIn = !!(session?.user?.id);
-    setIsLoggedIn(userLoggedIn);
-    
     console.log("useRecipeUserStatus - User logged in:", userLoggedIn);
     console.log("useRecipeUserStatus - Session user ID:", session?.user?.id);
+    
+    if (!cancelled) {
+      setIsLoggedIn(userLoggedIn);
+    }
     
     async function fetchIsPaid() {
       if (!userLoggedIn || !session?.user?.id) {
@@ -67,7 +69,7 @@ export function useRecipeUserStatus(session?: any) {
     
     fetchIsPaid();
     return () => { cancelled = true; };
-  }, [session?.user?.id]);
+  }, [session?.user?.id]); // Only depend on user ID to avoid multiple calls
 
   console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
   

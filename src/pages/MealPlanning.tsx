@@ -35,8 +35,16 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   const { toast } = useToast();
   const { isLoggedIn, isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
+  console.log("MealPlanning - Component state:", { 
+    sessionExists: !!session?.user, 
+    isLoggedIn, 
+    isPaid, 
+    statusLoading 
+  });
+
   useEffect(() => {
     if (!session?.user) {
+      console.log("MealPlanning - No session, redirecting to auth");
       navigate("/auth");
       return;
     }
@@ -93,11 +101,13 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
 
   // Redirect to auth if not logged in
   if (!session?.user) {
+    console.log("MealPlanning - No session user, returning null");
     return null;
   }
 
   // Show loading state while checking user status
   if (statusLoading) {
+    console.log("MealPlanning - Status loading, showing loading state");
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
@@ -110,6 +120,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
 
   // Show premium gate if user is logged in but not paid
   if (isLoggedIn && !isPaid) {
+    console.log("MealPlanning - User logged in but not paid, showing premium gate");
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
@@ -122,6 +133,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   }
 
   // Main content for paid users
+  console.log("MealPlanning - Rendering main content for paid user");
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
       <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
