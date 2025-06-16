@@ -28,42 +28,14 @@ const RecipeSubmitButton: React.FC<RecipeSubmitButtonProps> = ({
     {isSubmitting ? (
       <>
         <Upload className="animate-spin mr-2" size={20} />
-        <span
-          className="relative font-extrabold text-base px-2 py-1"
-          style={{
-            borderRadius: 8,
-            background:
-              "linear-gradient(90deg,rgba(255,255,255,0.32)_0%,rgba(255,255,255,0.18)_100%)",
-            backdropFilter: "blur(1.5px)",
-            WebkitBackdropFilter: "blur(1.5px)",
-            boxShadow: "0 1px 4px rgba(180,180,120,0.06)",
-            color: "#111",
-            textShadow:
-              "0 2px 7px rgba(255,255,255,0.7), 0 0px 1px rgba(0,0,0,0.15)",
-            fontSize: "1.19rem",
-          }}
-        >
+        <span className="font-extrabold text-base">
           Submitting...
         </span>
       </>
     ) : (
       <>
         <Upload className="mr-2" size={20} />
-        <span
-          className="relative font-extrabold text-base px-2 py-1"
-          style={{
-            borderRadius: 8,
-            background:
-              "linear-gradient(90deg,rgba(255,255,255,0.33)_0%,rgba(255,255,255,0.21)_100%)",
-            backdropFilter: "blur(1.5px)",
-            WebkitBackdropFilter: "blur(1.5px)",
-            boxShadow: "0 1px 4px rgba(180,180,120,0.06)",
-            color: "#111",
-            textShadow:
-              "0 2px 7px rgba(255,255,255,0.8), 0 0px 1px rgba(0,0,0,0.18)",
-            fontSize: "1.22rem",
-          }}
-        >
+        <span className="font-extrabold text-base">
           Submit Recipe
         </span>
       </>
