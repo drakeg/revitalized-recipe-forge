@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -30,12 +29,11 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isLoggedIn, isPaid, loading: statusLoading } = useRecipeUserStatus(session);
+  const { isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
   // Debug logging
   console.log("ShoppingLists - Debug info:", {
     statusLoading,
-    isLoggedIn,
     isPaid,
     sessionExists: !!session,
     userId: session?.user?.id
@@ -116,9 +114,9 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
     );
   }
 
-  // Show premium gate if user is not paid
-  if (isLoggedIn && !isPaid) {
-    console.log("Showing premium gate because user is not paid");
+  // FIXED: Use session directly - if user has session but is not paid, show premium gate
+  if (session?.user && !isPaid) {
+    console.log("ShoppingLists - User has session but not paid, showing premium gate", { isPaid, statusLoading, userId: session.user.id });
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
