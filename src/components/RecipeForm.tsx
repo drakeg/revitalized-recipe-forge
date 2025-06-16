@@ -30,7 +30,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
+//  const [error, setError] = useState<string | null>(null);
 
   // Hide form after recipe has been analyzed
   const [submitted, setSubmitted] = useState(false);
