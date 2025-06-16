@@ -64,7 +64,7 @@ const Index: React.FC<{
       </div>
       {/* site content (above background) */}
       <div className="relative z-10 min-h-screen flex flex-col w-full bg-transparent">
-        <Navbar loggedIn={!!session} userEmail={user?.email} />
+        <Navbar loggedIn={!!session} userEmail={user?.email} session={session} />
         <main className="flex-1 flex flex-col items-center justify-center px-4 pt-6">
           <RecipeForm session={session} />
           <HowItWorks />

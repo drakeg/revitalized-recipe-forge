@@ -6,16 +6,30 @@ export function useRecipeUserStatus(session?: any) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [currentSession, setCurrentSession] = useState(session);
+  
+  // Update internal session if the prop changes
+  useEffect(() => {
+    if (session !== currentSession) {
+      setCurrentSession(session);
+      setLoading(true); // Reset loading state when session changes
+    }
+  }, [session]);
 
   useEffect(() => {
     let cancelled = false;
     
-    // DEBUG: Log what session we received
+    // DEBUG: Enhanced logging
     console.log("useRecipeUserStatus - SESSION RECEIVED:", {
-      session,
-      sessionUser: session?.user,
-      sessionUserId: session?.user?.id,
-      timestamp: new Date().toISOString()
+      sessionExists: !!session,
+      userExists: !!session?.user,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
+      timestamp: new Date().toISOString(),
+      localStorage: {
+        'supabase.auth.token': localStorage.getItem('sb-xvtfkjjvzjjwpgrwteem-auth-token'),
+        'supabaseSession': localStorage.getItem('sb-xvtfkjjvzjjwpgrwteem-auth-token')
+      }
     });
     
     // Check if user is logged in
@@ -52,11 +66,11 @@ export function useRecipeUserStatus(session?: any) {
         
         if (profileError) {
           console.error("useRecipeUserStatus - Error fetching profile:", profileError);
-          // TEMPORARY FIX: If no profile exists, assume user is paid for testing
+          // If no profile exists, user is not paid
           if (profileError.code === 'PGRST116') { // No rows returned
-            console.log("useRecipeUserStatus - No profile found, assuming paid for testing");
+            console.log("useRecipeUserStatus - No profile found, defaulting to not paid");
             if (!cancelled) {
-              setIsPaid(true); // Changed from false to true for testing
+              setIsPaid(false);
               setLoading(false);
             }
           } else {
@@ -91,5 +105,10 @@ export function useRecipeUserStatus(session?: any) {
 
   console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
   
-  return { isLoggedIn, isPaid, loading };
+  return { 
+    isLoggedIn, 
+    isPaid, 
+    loading, 
+    session: currentSession 
+  };
 }

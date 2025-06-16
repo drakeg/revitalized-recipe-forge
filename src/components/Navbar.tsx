@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogIn, LogOut, UserPlus, LayoutDashboard, Calendar, ShoppingCart, Crown } from "lucide-react";
@@ -15,11 +15,28 @@ type NavbarProps = {
   session?: Session | null;
 };
 
-const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session }) => {
+const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSession }) => {
   const navigate = useNavigate();
-  const { isPaid, loading } = useRecipeUserStatus(session);
+  
+  // Use prop session if available, otherwise get it from the hook
+  const { isPaid, loading, session: hookSession } = useRecipeUserStatus(propSession);
+  const effectiveSession = propSession || hookSession;
+  
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [modalFeature, setModalFeature] = useState({ name: "", description: "" });
+
+  // Debug: Log Navbar props and state
+  useEffect(() => {
+    console.log('Navbar - Debug:', {
+      loggedIn,
+      userEmail,
+      sessionExists: !!effectiveSession,
+      sessionUserId: effectiveSession?.user?.id,
+      isPaid,
+      loading,
+      timestamp: new Date().toISOString()
+    });
+  }, [loggedIn, userEmail, effectiveSession, isPaid, loading]);
 
   const handleLogout = async () => {
     await secureSignOut();
@@ -106,7 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session }) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100 relative ${!isPaid && !loading ? 'opacity-75' : ''}`}
+                  className={`flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100 relative`}
                   onClick={() => handlePremiumFeatureClick("Meal Plans")}
                 >
                   <Calendar size={16} />
@@ -116,7 +133,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session }) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100 relative ${!isPaid && !loading ? 'opacity-75' : ''}`}
+                  className={`flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100 relative`}
                   onClick={() => handlePremiumFeatureClick("Shopping Lists")}
                 >
                   <ShoppingCart size={16} />
