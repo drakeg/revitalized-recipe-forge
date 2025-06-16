@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -40,12 +39,12 @@ export const secureSignOut = async () => {
       console.warn('Global sign out failed, continuing with cleanup:', err);
     }
     
-    // Force page reload for a completely clean state
-    window.location.href = '/auth';
+    // Force page reload for a completely clean state - redirect to home page
+    window.location.href = '/';
   } catch (error) {
     console.error('Sign out error:', error);
     // Even if sign out fails, redirect to ensure user can't access protected content
-    window.location.href = '/auth';
+    window.location.href = '/';
   }
 };
 
