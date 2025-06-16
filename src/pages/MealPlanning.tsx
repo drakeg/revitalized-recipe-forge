@@ -118,8 +118,9 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     );
   }
 
-  // Show premium gate if user is logged in but not paid
-  if (isLoggedIn && !isPaid) {
+  // FIXED: Only show premium gate if user is definitively logged in AND not paid
+  // Don't show it during loading states or when isLoggedIn is inconsistent
+  if (isLoggedIn && !isPaid && !statusLoading) {
     console.log("MealPlanning - User logged in but not paid, showing premium gate");
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
@@ -132,37 +133,51 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     );
   }
 
-  // Main content for paid users
-  console.log("MealPlanning - Rendering main content for paid user");
+  // FIXED: If we have a session and we're not loading, show the main content
+  // This handles cases where isPaid might be true but isLoggedIn is temporarily false
+  if (session?.user && !statusLoading && (isPaid || !isLoggedIn)) {
+    console.log("MealPlanning - Rendering main content for user with session", { isPaid, isLoggedIn });
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
+        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
+        
+        <main className="container mx-auto px-4 py-8">        
+          <MealPlanningHeader />
+
+          <MealPlanningActions 
+            mealPlansCount={mealPlans.length}
+            onCreateClick={() => setShowCreateModal(true)}
+          />
+
+          {loading ? (
+            <MealPlanningLoadingState message="Loading meal plans..." />
+          ) : mealPlans.length === 0 ? (
+            <MealPlanningEmpty onCreateClick={() => setShowCreateModal(true)} />
+          ) : (
+            <MealPlanList 
+              mealPlans={mealPlans} 
+              onRefresh={fetchMealPlans}
+            />
+          )}
+
+          <CreateMealPlanModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onSubmit={handleCreateMealPlan}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  // Fallback: show loading
+  console.log("MealPlanning - Fallback loading state");
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
       <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
-      
-      <main className="container mx-auto px-4 py-8">        
-        <MealPlanningHeader />
-
-        <MealPlanningActions 
-          mealPlansCount={mealPlans.length}
-          onCreateClick={() => setShowCreateModal(true)}
-        />
-
-        {loading ? (
-          <MealPlanningLoadingState message="Loading meal plans..." />
-        ) : mealPlans.length === 0 ? (
-          <MealPlanningEmpty onCreateClick={() => setShowCreateModal(true)} />
-        ) : (
-          <MealPlanList 
-            mealPlans={mealPlans} 
-            onRefresh={fetchMealPlans}
-          />
-        )}
-
-        <CreateMealPlanModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateMealPlan}
-        />
-      </main>
+      <div className="container mx-auto px-4 py-8">
+        <MealPlanningLoadingState message="Loading..." />
+      </div>
     </div>
   );
 };
