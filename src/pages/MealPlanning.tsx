@@ -35,10 +35,13 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   const { toast } = useToast();
   const { isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
-  console.log("MealPlanning - Component state:", { 
+  // DEBUG: Log the exact state values that determine access
+  console.log("MealPlanning - DEBUG - Access check values:", { 
     sessionExists: !!session?.user, 
+    sessionUserId: session?.user?.id,
     isPaid, 
-    statusLoading 
+    statusLoading,
+    shouldShowPremiumGate: session?.user && !statusLoading && !isPaid
   });
 
   useEffect(() => {
@@ -117,9 +120,14 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     );
   }
 
-  // FIXED: Use session directly - if user has session but is not paid, show premium gate
+  // Show premium gate if user has session but is not paid
   if (session?.user && !isPaid) {
-    console.log("MealPlanning - User has session but not paid, showing premium gate", { isPaid, statusLoading, userId: session.user.id });
+    console.log("MealPlanning - SHOWING PREMIUM GATE - Debug values:", { 
+      hasSession: !!session?.user, 
+      isPaid, 
+      statusLoading, 
+      userId: session.user.id 
+    });
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
@@ -132,7 +140,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   }
 
   // If we get here, user has session, status is loaded, and they're paid - show main content
-  console.log("MealPlanning - Rendering main content for paid user");
+  console.log("MealPlanning - SHOWING MAIN CONTENT for paid user");
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
       <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />

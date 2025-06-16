@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -31,12 +32,13 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
   const { toast } = useToast();
   const { isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
-  // Debug logging
-  console.log("ShoppingLists - Debug info:", {
-    statusLoading,
+  // DEBUG: Log the exact state values that determine access
+  console.log("ShoppingLists - DEBUG - Access check values:", {
+    sessionExists: !!session?.user,
+    sessionUserId: session?.user?.id,
     isPaid,
-    sessionExists: !!session,
-    userId: session?.user?.id
+    statusLoading,
+    shouldShowPremiumGate: session?.user && !statusLoading && !isPaid
   });
 
   useEffect(() => {
@@ -114,9 +116,14 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
     );
   }
 
-  // FIXED: Use session directly - if user has session but is not paid, show premium gate
+  // Show premium gate if user has session but is not paid
   if (session?.user && !isPaid) {
-    console.log("ShoppingLists - User has session but not paid, showing premium gate", { isPaid, statusLoading, userId: session.user.id });
+    console.log("ShoppingLists - SHOWING PREMIUM GATE - Debug values:", { 
+      hasSession: !!session?.user, 
+      isPaid, 
+      statusLoading, 
+      userId: session.user.id 
+    });
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
@@ -129,6 +136,7 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
   }
 
   // Main content for paid users
+  console.log("ShoppingLists - SHOWING MAIN CONTENT for paid user");
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
       <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
