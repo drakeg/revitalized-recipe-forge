@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -16,10 +15,10 @@ interface MealPlan {
 
 // Helper function to parse ingredient strings into quantity, unit, and ingredient
 const parseIngredient = (ingredientText: string) => {
-  // Remove common bullet points and clean the text
-  const cleaned = ingredientText.replace(/^[-•*\d.)\s]+/, '').trim();
+  // Remove only non-measurement bullet points (•, *, -, but NOT numbers or fractions)
+  const cleaned = ingredientText.replace(/^[-•*]\s*/, '').trim();
   
-  // Regular expression to match quantity, unit, and ingredient
+  // Regular expression to match quantity (including fractions), unit, and ingredient
   // Matches patterns like: "2 cups flour", "1/2 tsp salt", "3 large eggs", "200g butter"
   const match = cleaned.match(/^(\d+(?:\/\d+)?(?:\.\d+)?)\s*([a-zA-Z]*)\s+(.+)$/);
   

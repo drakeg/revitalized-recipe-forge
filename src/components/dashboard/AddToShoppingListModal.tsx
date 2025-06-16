@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,10 @@ interface AddToShoppingListModalProps {
 
 // Helper function to parse ingredient strings into quantity, unit, and ingredient
 const parseIngredient = (ingredientText: string): ParsedIngredient => {
-  // Remove common bullet points and clean the text
-  const cleaned = ingredientText.replace(/^[-•*\d.)\s]+/, '').trim();
+  // Remove only non-measurement bullet points (•, *, -, but NOT numbers or fractions)
+  const cleaned = ingredientText.replace(/^[-•*]\s*/, '').trim();
   
-  // Regular expression to match quantity, unit, and ingredient
+  // Regular expression to match quantity (including fractions), unit, and ingredient
   // Matches patterns like: "2 cups flour", "1/2 tsp salt", "3 large eggs", "200g butter"
   const match = cleaned.match(/^(\d+(?:\/\d+)?(?:\.\d+)?)\s*([a-zA-Z]*)\s+(.+)$/);
   
