@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Plus, ChefHat } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
 import MealPlanList from "@/components/meal-planning/MealPlanList";
 import CreateMealPlanModal from "@/components/meal-planning/CreateMealPlanModal";
+import PremiumFeatureGate from "@/components/PremiumFeatureGate";
 
 interface MealPlan {
   id: string;
@@ -30,6 +32,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isLoggedIn, isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
   useEffect(() => {
     if (!session?.user) {
@@ -38,6 +41,19 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     }
     fetchMealPlans();
   }, [session, navigate]);
+
+  // Show premium gate if user is not paid
+  if (!statusLoading && isLoggedIn && !isPaid) {
+    return (
+      <>
+        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
+        <PremiumFeatureGate 
+          featureName="Meal Planning"
+          description="Plan your meals for the week, organize your cooking schedule, and create shopping lists automatically from your meal plans."
+        />
+      </>
+    );
+  }
 
   const fetchMealPlans = async () => {
     try {
@@ -93,7 +109,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
-      <Navbar loggedIn={!!session} userEmail={session.user.email} />
+      <Navbar loggedIn={!!session} userEmail={session.user.email} session={session} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

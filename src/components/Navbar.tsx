@@ -1,20 +1,43 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, UserPlus, LayoutDashboard, Calendar, ShoppingCart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LogIn, LogOut, UserPlus, LayoutDashboard, Calendar, ShoppingCart, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { secureSignOut } from "@/utils/authUtils";
+import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
+import { Session } from "@supabase/supabase-js";
 
 type NavbarProps = {
   loggedIn: boolean;
   userEmail?: string | null;
+  session?: Session | null;
 };
 
-const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
+const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session }) => {
   const navigate = useNavigate();
+  const { isPaid, loading } = useRecipeUserStatus(session);
 
   const handleLogout = async () => {
     await secureSignOut();
+  };
+
+  const handlePremiumFeatureClick = (feature: string) => {
+    if (!loggedIn) {
+      navigate("/auth");
+      return;
+    }
+    if (!isPaid) {
+      // TODO: Navigate to subscription page when implemented
+      alert(`${feature} is available for paid subscribers only. Upgrade your account to access this feature!`);
+      return;
+    }
+    // Navigate to the actual feature
+    if (feature === "Meal Plans") {
+      navigate("/meal-planning");
+    } else if (feature === "Shopping Lists") {
+      navigate("/shopping-lists");
+    }
   };
 
   return (
@@ -50,8 +73,9 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
             </>
           ) : (
             <>
-              <span className="text-emerald-800 mr-3 hidden sm:inline text-sm font-semibold">
+              <span className="text-emerald-800 mr-3 hidden sm:inline text-sm font-semibold flex items-center gap-2">
                 {userEmail}
+                {!loading && isPaid && <Badge className="bg-yellow-500 text-yellow-900"><Crown size={12} /> Pro</Badge>}
               </span>
               <Button
                 variant="outline"
@@ -65,20 +89,22 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
-                onClick={() => navigate("/meal-planning")}
+                className={`flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100 relative ${!isPaid && !loading ? 'opacity-75' : ''}`}
+                onClick={() => handlePremiumFeatureClick("Meal Plans")}
               >
                 <Calendar size={16} />
                 Meal Plans
+                {!loading && !isPaid && <Crown size={12} className="text-yellow-600 ml-1" />}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
-                onClick={() => navigate("/shopping-lists")}
+                className={`flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100 relative ${!isPaid && !loading ? 'opacity-75' : ''}`}
+                onClick={() => handlePremiumFeatureClick("Shopping Lists")}
               >
                 <ShoppingCart size={16} />
                 Shopping
+                {!loading && !isPaid && <Crown size={12} className="text-yellow-600 ml-1" />}
               </Button>
               <Button
                 variant="ghost"

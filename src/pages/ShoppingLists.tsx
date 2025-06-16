@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Plus, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
 import ShoppingListCard from "@/components/shopping/ShoppingListCard";
 import CreateShoppingListModal from "@/components/shopping/CreateShoppingListModal";
+import PremiumFeatureGate from "@/components/PremiumFeatureGate";
 
 interface ShoppingList {
   id: string;
@@ -28,6 +30,7 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isLoggedIn, isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
   useEffect(() => {
     if (!session?.user) {
@@ -36,6 +39,19 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
     }
     fetchShoppingLists();
   }, [session, navigate]);
+
+  // Show premium gate if user is not paid
+  if (!statusLoading && isLoggedIn && !isPaid) {
+    return (
+      <>
+        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
+        <PremiumFeatureGate 
+          featureName="Shopping Lists"
+          description="Create and manage your shopping lists, automatically generate them from your meal plans, and organize your grocery shopping efficiently."
+        />
+      </>
+    );
+  }
 
   const fetchShoppingLists = async () => {
     try {
@@ -91,7 +107,7 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
-      <Navbar loggedIn={!!session} userEmail={session.user.email} />
+      <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
