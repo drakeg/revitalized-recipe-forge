@@ -34,6 +34,15 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   const { toast } = useToast();
   const { isLoggedIn, isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
+  // Debug logging
+  console.log("MealPlanning - Debug info:", {
+    statusLoading,
+    isLoggedIn,
+    isPaid,
+    sessionExists: !!session,
+    userId: session?.user?.id
+  });
+
   useEffect(() => {
     if (!session?.user) {
       navigate("/auth");
@@ -44,6 +53,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
 
   // Show premium gate if user is not paid
   if (!statusLoading && isLoggedIn && !isPaid) {
+    console.log("Showing premium gate because: statusLoading=", statusLoading, "isLoggedIn=", isLoggedIn, "isPaid=", isPaid);
     return (
       <>
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
@@ -54,6 +64,13 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
       </>
     );
   }
+
+  // Debug: Log when we should show the main content
+  console.log("MealPlanning - Should show main content:", {
+    condition1: statusLoading, // if true, we're still loading
+    condition2: !statusLoading && isLoggedIn && !isPaid, // if true, show premium gate
+    condition3: !statusLoading && isLoggedIn && isPaid // if true, show main content
+  });
 
   const fetchMealPlans = async () => {
     try {
