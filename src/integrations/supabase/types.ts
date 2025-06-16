@@ -183,6 +183,7 @@ export type Database = {
           file_url: string | null
           id: string
           original_text: string
+          source_url: string | null
           title: string
           updated_at: string
           user_id: string
@@ -193,6 +194,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           original_text: string
+          source_url?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -203,6 +205,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           original_text?: string
+          source_url?: string | null
           title?: string
           updated_at?: string
           user_id?: string

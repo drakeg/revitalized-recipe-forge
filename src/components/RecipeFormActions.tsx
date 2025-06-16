@@ -19,19 +19,6 @@ const RecipeFormActions: React.FC<RecipeFormActionsProps> = ({
   onConvertAnother,
   onSave,
 }) => {
-  console.log("🎯 RecipeFormActions render:", {
-    userIsLoggedIn,
-    userIsPaid,
-    saving,
-    saveSuccess,
-    showSaveButton: userIsLoggedIn && userIsPaid
-  });
-
-  const handleSaveClick = () => {
-    console.log("🔘 Save button clicked!");
-    onSave();
-  };
-
   return (
     <>
       {/* Save success banner */}
@@ -55,7 +42,7 @@ const RecipeFormActions: React.FC<RecipeFormActionsProps> = ({
             variant="default"
             className="font-semibold text-white px-6 py-2 bg-emerald-500 hover:bg-emerald-600 border-2 border-emerald-500"
             disabled={saving}
-            onClick={handleSaveClick}
+            onClick={onSave}
           >
             {saving ? "Saving..." : "Save to My Recipe Book"}
           </Button>
