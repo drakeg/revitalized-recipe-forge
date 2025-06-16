@@ -8,6 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Approximate token limit (leaving room for system prompt and response)
+const MAX_TEXT_LENGTH = 50000; // Conservative limit for text characters
+
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -83,6 +86,19 @@ serve(async (req: Request) => {
         }
 
         console.log("Extracted text length:", textToAnalyze.length);
+        
+        // Check if the extracted text is too long for the AI model
+        if (textToAnalyze.length > MAX_TEXT_LENGTH) {
+          return new Response(JSON.stringify({ 
+            error: `The file contains too much text (${textToAnalyze.length} characters). Our AI can process up to ${MAX_TEXT_LENGTH} characters at a time. Please try copying and pasting just the recipe portion from your file, or upload a smaller file with only the recipe content.`,
+            textLength: textToAnalyze.length,
+            maxLength: MAX_TEXT_LENGTH,
+            suggestion: "copy_paste"
+          }), {
+            status: 400,
+            headers: corsHeaders,
+          });
+        }
       } catch (fileError) {
         console.error("File processing error:", fileError);
         return new Response(JSON.stringify({ 
@@ -92,6 +108,18 @@ serve(async (req: Request) => {
           headers: corsHeaders,
         });
       }
+    }
+
+    // Also check if manually entered text is too long
+    if (textToAnalyze.length > MAX_TEXT_LENGTH) {
+      return new Response(JSON.stringify({ 
+        error: `The recipe text is too long (${textToAnalyze.length} characters). Please shorten it to under ${MAX_TEXT_LENGTH} characters, or break it into smaller recipes.`,
+        textLength: textToAnalyze.length,
+        maxLength: MAX_TEXT_LENGTH
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
     }
 
     if (!textToAnalyze && !title) {
@@ -144,6 +172,16 @@ ${textToAnalyze ? textToAnalyze : ""}`;
 
     const data = await response.json();
     if (!response.ok) {
+      // Handle specific token limit errors
+      if (data.error?.message?.includes("maximum context length")) {
+        return new Response(JSON.stringify({ 
+          error: `The recipe is too long for our AI to process. Please try shortening the text or copying just the main recipe content.`,
+          suggestion: "shorten_text"
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
       throw new Error(data.error?.message || "Error processing Deepseek request.");
     }
 

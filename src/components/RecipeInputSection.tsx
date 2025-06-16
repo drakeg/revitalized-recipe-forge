@@ -14,7 +14,7 @@ interface RecipeInputSectionProps {
   setFile: (file: File | null) => void;
   isSubmitting: boolean;
   handleFormSubmit: (e: React.FormEvent) => void;
-  error: string | null;
+  error: string | React.ReactNode | null;
   acceptedFileTypes: string;
 }
 

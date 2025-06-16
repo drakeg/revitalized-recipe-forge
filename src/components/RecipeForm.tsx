@@ -118,7 +118,19 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
         );
         const resJson = await response.json();
         if (!response.ok || resJson.error) {
-          setError(resJson.error || "Failed to analyze recipe.");
+          // Handle specific error types with helpful suggestions
+          if (resJson.suggestion === "copy_paste" || resJson.suggestion === "shorten_text") {
+            setError(
+              <div className="space-y-2">
+                <div>{resJson.error}</div>
+                <div className="text-xs text-muted-foreground">
+                  💡 <strong>Tip:</strong> Try copying just the recipe ingredients and instructions from your file and pasting them in the text area above.
+                </div>
+              </div>
+            );
+          } else {
+            setError(resJson.error || "Failed to analyze recipe.");
+          }
           setAnalysis(null);
         } else {
           setAnalysis(resJson.result);
