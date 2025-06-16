@@ -145,7 +145,23 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
   };
 
   const saveRecipe = async () => {
+    console.log("🔄 saveRecipe function called");
+    console.log("🔍 Session data:", {
+      sessionExists: !!session,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email
+    });
+    console.log("🔍 Recipe data:", {
+      title,
+      hasAnalysis: !!analysis,
+      analysisLength: analysis?.length || 0,
+      recipeTextLength: recipeText?.length || 0,
+      currentFileUrl,
+      url
+    });
+
     if (!session?.user?.id) {
+      console.error("❌ No user session found");
       toast({
         title: "Not Signed In",
         description: "You need to be signed in to save recipes.",
@@ -153,7 +169,9 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
       });
       return;
     }
+
     if (!title || !analysis) {
+      console.error("❌ Missing required data:", { hasTitle: !!title, hasAnalysis: !!analysis });
       toast({
         title: "Missing Data",
         description: "Recipe title and analysis are required to save.",
@@ -161,33 +179,57 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
       });
       return;
     }
+
+    console.log("✅ Validation passed, attempting to save recipe");
     setSaving(true);
     setSaveSuccess(null);
 
-    const { error: dbError } = await supabase.from("recipes").insert([
-      {
+    try {
+      console.log("📝 Inserting recipe into database...");
+      const insertData = {
         user_id: session.user.id,
         title,
         original_text: recipeText,
         analysis,
         file_url: currentFileUrl,
         source_url: url,
-      },
-    ]);
-    setSaving(false);
-    if (dbError) {
+      };
+      console.log("📋 Insert data:", insertData);
+
+      const { data, error: dbError } = await supabase
+        .from("recipes")
+        .insert([insertData])
+        .select();
+
+      console.log("📊 Database response:", { data, error: dbError });
+
+      setSaving(false);
+      
+      if (dbError) {
+        console.error("❌ Database error:", dbError);
+        setSaveSuccess(null);
+        toast({
+          title: "Save Failed",
+          description: dbError.message,
+          variant: "destructive"
+        });
+      } else {
+        console.log("✅ Recipe saved successfully:", data);
+        setSaveSuccess("Recipe saved to your Recipe Book!");
+        toast({
+          title: "Recipe Saved",
+          description: "Recipe added to your personal Recipe Book.",
+          variant: "default"
+        });
+      }
+    } catch (err: any) {
+      console.error("❌ Exception during save:", err);
+      setSaving(false);
       setSaveSuccess(null);
       toast({
         title: "Save Failed",
-        description: dbError.message,
+        description: "An unexpected error occurred while saving.",
         variant: "destructive"
-      });
-    } else {
-      setSaveSuccess("Recipe saved to your Recipe Book!");
-      toast({
-        title: "Recipe Saved",
-        description: "Recipe added to your personal Recipe Book.",
-        variant: "default"
       });
     }
   };
