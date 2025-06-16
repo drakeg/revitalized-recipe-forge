@@ -34,18 +34,16 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   const { toast } = useToast();
   const { isLoggedIn, isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
-  // Enhanced debug logging
-  console.log("MealPlanning - Enhanced Debug info:", {
-    statusLoading,
-    isLoggedIn,
-    isPaid,
-    sessionExists: !!session,
-    userId: session?.user?.id,
-    userEmail: session?.user?.email,
-    sessionUser: session?.user,
-    showingPremiumGate: isLoggedIn && !isPaid,
-    shouldShowMainContent: isLoggedIn && isPaid
-  });
+  // Debug panel - will be visible temporarily to help diagnose the issue
+  console.log("=== MealPlanning Component Debug ===");
+  console.log("Session exists:", !!session);
+  console.log("User ID:", session?.user?.id);
+  console.log("User email:", session?.user?.email);
+  console.log("Status loading:", statusLoading);
+  console.log("Is logged in:", isLoggedIn);
+  console.log("Is paid:", isPaid);
+  console.log("Should show premium gate:", isLoggedIn && !isPaid);
+  console.log("Should show main content:", isLoggedIn && isPaid);
 
   useEffect(() => {
     if (!session?.user) {
@@ -115,8 +113,105 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto"></div>
-            <p className="text-emerald-600 mt-2">Loading...</p>
+            <p className="text-emerald-600 mt-2">Checking your subscription status...</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Temporary debug display
+  if (process.env.NODE_ENV === 'development') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
+        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
+        <div className="container mx-auto px-4 py-8">
+          <Card className="mb-6 bg-yellow-50 border-yellow-200">
+            <CardHeader>
+              <CardTitle className="text-yellow-800">🐛 Debug Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p><strong>Session exists:</strong> {String(!!session)}</p>
+              <p><strong>User ID:</strong> {session?.user?.id || 'None'}</p>
+              <p><strong>User email:</strong> {session?.user?.email || 'None'}</p>
+              <p><strong>Status loading:</strong> {String(statusLoading)}</p>
+              <p><strong>Is logged in:</strong> {String(isLoggedIn)}</p>
+              <p><strong>Is paid:</strong> {String(isPaid)}</p>
+              <p className="text-red-600"><strong>Check the browser console for detailed logs</strong></p>
+            </CardContent>
+          </Card>
+          
+          {/* Show premium gate if user is not paid */}
+          {isLoggedIn && !isPaid && (
+            <PremiumFeatureGate 
+              featureName="Meal Planning"
+              description="Plan your meals for the week, organize your cooking schedule, and create shopping lists automatically from your meal plans."
+            />
+          )}
+          
+          {/* Show main content if user is paid */}
+          {isLoggedIn && isPaid && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-emerald-800 mb-2 flex items-center gap-2">
+                  <Calendar className="w-8 h-8" />
+                  Meal Planning
+                </h1>
+                <p className="text-emerald-600">
+                  Plan your meals for the week and generate shopping lists
+                </p>
+              </div>
+
+              <div className="mb-6 flex justify-between items-center">
+                <h2 className="text-2xl font-semibold text-emerald-800">
+                  Your Meal Plans ({mealPlans.length})
+                </h2>
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Meal Plan
+                </Button>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto"></div>
+                  <p className="text-emerald-600 mt-2">Loading meal plans...</p>
+                </div>
+              ) : mealPlans.length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <ChefHat className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-emerald-800 mb-2">
+                      No meal plans yet
+                    </h3>
+                    <p className="text-emerald-600 mb-4">
+                      Create your first meal plan to get started with organized meal planning!
+                    </p>
+                    <Button
+                      onClick={() => setShowCreateModal(true)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                    >
+                      Create Your First Meal Plan
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <MealPlanList 
+                  mealPlans={mealPlans} 
+                  onRefresh={fetchMealPlans}
+                />
+              )}
+
+              <CreateMealPlanModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSubmit={handleCreateMealPlan}
+              />
+            </>
+          )}
         </div>
       </div>
     );
@@ -124,7 +219,6 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
 
   // Show premium gate if user is not paid
   if (isLoggedIn && !isPaid) {
-    console.log("Showing premium gate because user is not paid");
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />

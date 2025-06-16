@@ -13,19 +13,19 @@ export function useRecipeUserStatus(session?: any) {
     // Check if user is logged in - more robust check
     const userLoggedIn = !!(session?.user?.id);
     
-    console.log("useRecipeUserStatus - Debug:", {
-      sessionExists: !!session,
-      userExists: !!session?.user,
-      userId: session?.user?.id,
-      userLoggedIn
-    });
+    console.log("=== useRecipeUserStatus - Comprehensive Debug ===");
+    console.log("Session object:", session);
+    console.log("User object:", session?.user);
+    console.log("User ID:", session?.user?.id);
+    console.log("User email:", session?.user?.email);
+    console.log("User logged in:", userLoggedIn);
     
     // Set logged in status immediately
     setIsLoggedIn(userLoggedIn);
     
     async function fetchIsPaid() {
       if (!userLoggedIn || !session?.user?.id) {
-        console.log("No user ID found or not logged in, setting isPaid to false");
+        console.log("❌ No user ID found or not logged in, setting isPaid to false");
         if (!cancelled) {
           setIsPaid(false);
           setLoading(false);
@@ -34,28 +34,61 @@ export function useRecipeUserStatus(session?: any) {
       }
 
       try {
-        console.log("Fetching paid status for user:", session.user.id);
+        console.log("🔍 Fetching paid status for user:", session.user.id);
         
-        const { data, error } = await supabase
+        // First, let's check if the user exists in profiles table
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("is_paid")
-          .eq("id", session.user.id)
-          .single();
+          .select("*")
+          .eq("id", session.user.id);
         
-        console.log("Profiles query result:", { data, error });
+        console.log("📊 Full profiles query result:", { 
+          data: profileData, 
+          error: profileError,
+          userExists: profileData && profileData.length > 0 
+        });
+        
+        if (profileError) {
+          console.error("❌ Error fetching profile:", profileError);
+          if (!cancelled) {
+            setIsPaid(false);
+            setLoading(false);
+          }
+          return;
+        }
+
+        if (!profileData || profileData.length === 0) {
+          console.log("⚠️ User profile not found, creating one...");
+          // Create profile if it doesn't exist
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert([{ id: session.user.id, is_paid: true }])
+            .select()
+            .single();
+          
+          console.log("✨ Profile creation result:", { data: newProfile, error: createError });
+          
+          if (!cancelled) {
+            if (!createError && newProfile) {
+              setIsPaid(Boolean(newProfile.is_paid));
+            } else {
+              setIsPaid(false);
+            }
+            setLoading(false);
+          }
+          return;
+        }
+
+        const profile = profileData[0];
+        console.log("👤 User profile found:", profile);
+        console.log("💳 Paid status:", profile.is_paid);
         
         if (!cancelled) {
-          if (!error && data) {
-            console.log("User paid status:", data.is_paid);
-            setIsPaid(Boolean(data.is_paid));
-          } else {
-            console.error("Error fetching paid status:", error);
-            setIsPaid(false);
-          }
+          setIsPaid(Boolean(profile.is_paid));
           setLoading(false);
         }
       } catch (err) {
-        console.error("Exception fetching paid status:", err);
+        console.error("💥 Exception fetching paid status:", err);
         if (!cancelled) {
           setIsPaid(false);
           setLoading(false);
@@ -67,7 +100,10 @@ export function useRecipeUserStatus(session?: any) {
     return () => { cancelled = true; };
   }, [session?.user?.id]);
 
-  console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
+  console.log("=== useRecipeUserStatus - Final State ===");
+  console.log("isLoggedIn:", isLoggedIn);
+  console.log("isPaid:", isPaid);
+  console.log("loading:", loading);
 
   return { isLoggedIn, isPaid, loading };
 }
