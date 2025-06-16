@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import MealPlanning from "./pages/MealPlanning";
 import MealPlanView from "./pages/MealPlanView";
 import ShoppingLists from "./pages/ShoppingLists";
+import ShoppingListView from "./pages/ShoppingListView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => {
             <Route path="/meal-planning" element={<MealPlanning session={session} />} />
             <Route path="/meal-plan/:id" element={<MealPlanView session={session} />} />
             <Route path="/shopping-lists" element={<ShoppingLists session={session} />} />
+            <Route path="/shopping-list/:id" element={<ShoppingListView session={session} />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
