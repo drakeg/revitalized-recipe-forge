@@ -3,10 +3,11 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; text: string; file: File | null }) => void) => {
+export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; text: string; file: File | null; url: string }) => void) => {
   const [title, setTitle] = useState("");
   const [recipeText, setRecipeText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [error, setError] = useState<React.ReactNode | null>(null);
@@ -53,7 +54,7 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
         console.log("File uploaded successfully:", fileUrl);
       }
 
-      if (textToAnalyze || fileUrl) {
+      if (textToAnalyze || fileUrl || url) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         const headers: Record<string, string> = {
@@ -72,7 +73,8 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
             body: JSON.stringify({ 
               title, 
               text: textToAnalyze,
-              fileUrl: fileUrl 
+              fileUrl: fileUrl,
+              url: url 
             }),
           }
         );
@@ -100,11 +102,11 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
           }
         }
       } else {
-        setError("Please provide recipe text or upload a file to analyze.");
+        setError("Please provide recipe text, upload a file, or enter a recipe URL to analyze.");
       }
       
       setIsSubmitting(false);
-      if (onSubmit) onSubmit({ title, text: textToAnalyze, file });
+      if (onSubmit) onSubmit({ title, text: textToAnalyze, file, url });
     } catch (err: any) {
       setIsSubmitting(false);
       setError(err.message || "Unexpected error while analyzing.");
@@ -119,6 +121,7 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
     setTitle("");
     setRecipeText("");
     setFile(null);
+    setUrl("");
     setSaveSuccess(null);
     setCurrentFileUrl(null);
   };
@@ -150,6 +153,7 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
         original_text: recipeText,
         analysis,
         file_url: currentFileUrl,
+        source_url: url,
       },
     ]);
     setSaving(false);
@@ -177,6 +181,8 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
     setRecipeText,
     file,
     setFile,
+    url,
+    setUrl,
     isSubmitting,
     analysis,
     error,

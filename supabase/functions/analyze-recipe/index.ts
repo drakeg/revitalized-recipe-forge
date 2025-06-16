@@ -18,12 +18,54 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { title, text, fileUrl } = await req.json();
+    const { title, text, fileUrl, url } = await req.json();
 
     let textToAnalyze = text || "";
 
+    // If a URL is provided, fetch and extract recipe content
+    if (url && !text && !fileUrl) {
+      console.log("Processing URL:", url);
+      
+      try {
+        const urlResponse = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        
+        if (!urlResponse.ok) {
+          throw new Error(`Failed to fetch URL: ${urlResponse.statusText}`);
+        }
+
+        const htmlContent = await urlResponse.text();
+        
+        // Extract recipe content using various methods
+        textToAnalyze = extractRecipeFromHtml(htmlContent);
+        
+        if (!textToAnalyze || textToAnalyze.length < 50) {
+          return new Response(JSON.stringify({ 
+            error: "Could not extract recipe content from the URL. Please try copying and pasting the recipe text instead." 
+          }), {
+            status: 400,
+            headers: corsHeaders,
+          });
+        }
+
+        console.log("Extracted text from URL, length:", textToAnalyze.length);
+        
+      } catch (urlError) {
+        console.error("URL processing error:", urlError);
+        return new Response(JSON.stringify({ 
+          error: "Failed to fetch recipe from URL. Please check the URL or try copying and pasting the recipe text instead." 
+        }), {
+          status: 400,
+          headers: corsHeaders,
+        });
+      }
+    }
+
     // If a file URL is provided, download and extract text from it
-    if (fileUrl && !text) {
+    if (fileUrl && !text && !url) {
       console.log("Processing file:", fileUrl);
       
       try {
@@ -189,7 +231,7 @@ ${textToAnalyze ? textToAnalyze : ""}`;
     
     return new Response(JSON.stringify({ 
       result,
-      extractedText: fileUrl ? textToAnalyze : undefined 
+      extractedText: (fileUrl || url) ? textToAnalyze : undefined 
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -202,3 +244,90 @@ ${textToAnalyze ? textToAnalyze : ""}`;
     );
   }
 });
+
+function extractRecipeFromHtml(html: string): string {
+  // Remove script and style tags
+  let cleanHtml = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  cleanHtml = cleanHtml.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  
+  // Try to find JSON-LD structured data first
+  const jsonLdMatch = cleanHtml.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (jsonLdMatch) {
+    try {
+      const jsonData = JSON.parse(jsonLdMatch[1]);
+      if (jsonData['@type'] === 'Recipe' || (Array.isArray(jsonData) && jsonData.some(item => item['@type'] === 'Recipe'))) {
+        const recipe = Array.isArray(jsonData) ? jsonData.find(item => item['@type'] === 'Recipe') : jsonData;
+        let recipeText = '';
+        
+        if (recipe.name) recipeText += `${recipe.name}\n\n`;
+        if (recipe.description) recipeText += `${recipe.description}\n\n`;
+        
+        if (recipe.recipeIngredient) {
+          recipeText += 'Ingredients:\n';
+          recipe.recipeIngredient.forEach((ingredient: string) => {
+            recipeText += `- ${ingredient}\n`;
+          });
+          recipeText += '\n';
+        }
+        
+        if (recipe.recipeInstructions) {
+          recipeText += 'Instructions:\n';
+          recipe.recipeInstructions.forEach((instruction: any, index: number) => {
+            const text = typeof instruction === 'string' ? instruction : instruction.text;
+            recipeText += `${index + 1}. ${text}\n`;
+          });
+        }
+        
+        if (recipeText.length > 100) {
+          return recipeText;
+        }
+      }
+    } catch (e) {
+      console.log('Failed to parse JSON-LD:', e);
+    }
+  }
+  
+  // Fallback: extract text from common recipe selectors
+  const recipeSelectors = [
+    '.recipe-content', '.recipe-text', '.recipe-instructions', '.recipe-ingredients',
+    '[class*="recipe"]', '[class*="ingredient"]', '[class*="instruction"]',
+    '.entry-content', '.post-content', '.content'
+  ];
+  
+  let extractedText = '';
+  
+  // Simple HTML tag removal and text extraction
+  const textContent = cleanHtml.replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Look for recipe-like patterns
+  const recipePatterns = [
+    /ingredients?[\s\S]*?(?=instructions?|directions?|method|steps)/i,
+    /instructions?[\s\S]*?(?=nutrition|notes|tips|serves|prep time)/i,
+    /directions?[\s\S]*?(?=nutrition|notes|tips|serves|prep time)/i
+  ];
+  
+  for (const pattern of recipePatterns) {
+    const match = textContent.match(pattern);
+    if (match) {
+      extractedText += match[0] + '\n\n';
+    }
+  }
+  
+  // If no specific patterns found, return a portion of the cleaned text
+  if (!extractedText && textContent.length > 200) {
+    // Try to find text that looks like a recipe (contains common food words)
+    const foodWords = ['cup', 'tablespoon', 'teaspoon', 'pound', 'ounce', 'gram', 'ingredient', 'cook', 'bake', 'mix', 'add', 'heat', 'stir'];
+    const sentences = textContent.split(/[.!?]+/);
+    const recipeSentences = sentences.filter(sentence => 
+      foodWords.some(word => sentence.toLowerCase().includes(word))
+    );
+    
+    if (recipeSentences.length > 3) {
+      extractedText = recipeSentences.slice(0, 20).join('. ') + '.';
+    }
+  }
+  
+  return extractedText.trim();
+}

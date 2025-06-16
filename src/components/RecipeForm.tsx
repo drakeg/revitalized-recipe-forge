@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
 import { useRecipeForm } from "@/hooks/useRecipeForm";
@@ -9,7 +8,7 @@ const FOOD_BG =
   "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=800&q=80";
 
 type RecipeFormProps = {
-  onSubmit?: (data: { title: string; text: string; file: File | null }) => void;
+  onSubmit?: (data: { title: string; text: string; file: File | null; url: string }) => void;
   session?: any;
 };
 
@@ -26,6 +25,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     setRecipeText,
     file,
     setFile,
+    url,
+    setUrl,
     isSubmitting,
     analysis,
     error,
@@ -71,6 +72,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
             setRecipeText={setRecipeText}
             file={file}
             setFile={setFile}
+            url={url}
+            setUrl={setUrl}
             isSubmitting={isSubmitting}
             handleFormSubmit={handleFormSubmit}
             error={error}

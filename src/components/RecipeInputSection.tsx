@@ -3,6 +3,7 @@ import React from "react";
 import RecipeFormHeader from "./RecipeFormHeader";
 import RecipeTextInput from "./RecipeTextInput";
 import RecipeFileInput from "./RecipeFileInput";
+import RecipeUrlInput from "./RecipeUrlInput";
 import RecipeSubmitButton from "./RecipeSubmitButton";
 import RecipeFormError from "./RecipeFormError";
 
@@ -13,6 +14,8 @@ interface RecipeInputSectionProps {
   setRecipeText: (val: string) => void;
   file: File | null;
   setFile: (file: File | null) => void;
+  url: string;
+  setUrl: (url: string) => void;
   isSubmitting: boolean;
   handleFormSubmit: (e: React.FormEvent) => void;
   error: string | React.ReactNode | null;
@@ -26,6 +29,8 @@ const RecipeInputSection: React.FC<RecipeInputSectionProps> = ({
   setRecipeText,
   file,
   setFile,
+  url,
+  setUrl,
   isSubmitting,
   handleFormSubmit,
   error,
@@ -35,12 +40,23 @@ const RecipeInputSection: React.FC<RecipeInputSectionProps> = ({
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
       setRecipeText("");
+      setUrl("");
     }
   };
+
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setRecipeText(e.target.value);
     setFile(null);
+    setUrl("");
   };
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUrl(e.target.value);
+    setRecipeText("");
+    setFile(null);
+  };
+
+  const hasInput = recipeText || file || url;
 
   return (
     <>
@@ -73,18 +89,24 @@ const RecipeInputSection: React.FC<RecipeInputSectionProps> = ({
         <RecipeTextInput
           value={recipeText}
           onChange={handleTextAreaChange}
-          disabled={!!file}
+          disabled={!!(file || url)}
         />
         <RecipeFileInput
           file={file}
           onFileChange={handleFileChange}
           onRemove={() => setFile(null)}
-          disabled={!!recipeText}
+          disabled={!!(recipeText || url)}
           acceptedFileTypes={acceptedFileTypes}
+        />
+        <RecipeUrlInput
+          url={url}
+          onUrlChange={handleUrlChange}
+          onRemove={() => setUrl("")}
+          disabled={!!(recipeText || file)}
         />
         <RecipeSubmitButton
           isSubmitting={isSubmitting}
-          disabled={isSubmitting || (!recipeText && !file) || !title}
+          disabled={isSubmitting || !hasInput || !title}
         />
       </form>
       <RecipeFormError error={error} />
