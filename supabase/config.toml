@@ -1,8 +1,1 @@
-
 project_id = "xvtfkjjvzjjwpgrwteem"
-
-[functions]
-# Other function configs ...
-
-[functions.analyze-recipe]
-verify_jwt = false
