@@ -10,6 +10,14 @@ export function useRecipeUserStatus(session?: any) {
   useEffect(() => {
     let cancelled = false;
     
+    // DEBUG: Log what session we received
+    console.log("useRecipeUserStatus - SESSION RECEIVED:", {
+      session,
+      sessionUser: session?.user,
+      sessionUserId: session?.user?.id,
+      timestamp: new Date().toISOString()
+    });
+    
     // Check if user is logged in
     const userLoggedIn = !!(session?.user?.id);
     console.log("useRecipeUserStatus - User logged in:", userLoggedIn);
@@ -79,7 +87,7 @@ export function useRecipeUserStatus(session?: any) {
     
     fetchIsPaid();
     return () => { cancelled = true; };
-  }, [session?.user?.id]); // Only depend on user ID to avoid multiple calls
+  }, [session?.user?.id, session]); // Added session to dependencies to catch session updates
 
   console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
   

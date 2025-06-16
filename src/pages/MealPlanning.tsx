@@ -35,6 +35,14 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   const { toast } = useToast();
   const { isPaid, loading: statusLoading } = useRecipeUserStatus(session);
 
+  // DEBUG: Log session being passed to component
+  console.log("MealPlanning - SESSION DEBUG:", {
+    sessionProp: session,
+    sessionUser: session?.user,
+    sessionUserId: session?.user?.id,
+    timestamp: new Date().toISOString()
+  });
+
   // DEBUG: Log the exact state values that determine access
   console.log("MealPlanning - DEBUG - Access check values:", { 
     sessionExists: !!session?.user, 
@@ -45,6 +53,11 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
   });
 
   useEffect(() => {
+    console.log("MealPlanning - useEffect triggered - session check:", {
+      sessionUser: session?.user,
+      sessionUserId: session?.user?.id
+    });
+    
     if (!session?.user) {
       console.log("MealPlanning - No session, redirecting to auth");
       navigate("/auth");
