@@ -122,35 +122,16 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     );
   }
 
-  // Debug section to show current state
-  const DebugInfo = () => (
-    <div className="bg-yellow-100 border border-yellow-400 p-4 mb-4 rounded">
-      <h3 className="font-bold text-yellow-800">Debug Info:</h3>
-      <pre className="text-sm text-yellow-700">
-        {JSON.stringify({
-          isLoggedIn,
-          isPaid,
-          statusLoading,
-          userId: session?.user?.id,
-          userEmail: session?.user?.email
-        }, null, 2)}
-      </pre>
-    </div>
-  );
-
   // Show premium gate if user is not paid
   if (isLoggedIn && !isPaid) {
     console.log("Showing premium gate because user is not paid");
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
         <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
-        <div className="container mx-auto px-4 py-8">
-          <DebugInfo />
-          <PremiumFeatureGate 
-            featureName="Meal Planning"
-            description="Plan your meals for the week, organize your cooking schedule, and create shopping lists automatically from your meal plans."
-          />
-        </div>
+        <PremiumFeatureGate 
+          featureName="Meal Planning"
+          description="Plan your meals for the week, organize your cooking schedule, and create shopping lists automatically from your meal plans."
+        />
       </div>
     );
   }
@@ -160,9 +141,7 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
       <Navbar loggedIn={!!session} userEmail={session.user.email} session={session} />
       
-      <main className="container mx-auto px-4 py-8">
-        <DebugInfo />
-        
+      <main className="container mx-auto px-4 py-8">        
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-emerald-800 mb-2 flex items-center gap-2">
             <Calendar className="w-8 h-8" />

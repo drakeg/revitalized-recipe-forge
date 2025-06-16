@@ -34,9 +34,9 @@ export function useRecipeUserStatus(session?: any) {
           
           console.log("Profiles query result:", { data, error });
           
-          if (!cancelled && !error) {
-            console.log("User paid status:", data?.is_paid);
-            setIsPaid(Boolean(data?.is_paid));
+          if (!cancelled && !error && data) {
+            console.log("User paid status:", data.is_paid);
+            setIsPaid(Boolean(data.is_paid));
           } else if (error) {
             console.error("Error fetching paid status:", error);
             setIsPaid(false);
@@ -59,7 +59,7 @@ export function useRecipeUserStatus(session?: any) {
     
     fetchIsPaid();
     return () => { cancelled = true; };
-  }, [session?.user?.id, session?.user]);
+  }, [session?.user?.id]);
 
   console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
 
