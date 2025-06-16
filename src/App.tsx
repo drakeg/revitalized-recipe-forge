@@ -53,20 +53,38 @@ const App = () => {
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
-    // Set up the auth state listener first
+    // Set up the auth state listener first for proper session persistence
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, session?.user?.email);
+      
+      // Update state synchronously
       setSession(session);
       setUser(session?.user ?? null);
       setReady(true);
+      
+      // Defer any additional data fetching to prevent deadlocks
+      if (event === 'SIGNED_IN' && session?.user) {
+        setTimeout(() => {
+          // Any additional user data fetching can go here
+          console.log('User signed in successfully');
+        }, 0);
+      }
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      }
     });
+    
     // Get initial session AFTER setting up the listener
     supabase.auth.getSession().then(({ data }) => {
+      console.log('Initial session:', data.session?.user?.email);
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setReady(true);
     });
+    
     return () => {
       subscription.unsubscribe();
     };

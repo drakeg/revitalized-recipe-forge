@@ -2,8 +2,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, UserPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { secureSignOut } from "@/utils/authUtils";
 
 type NavbarProps = {
   loggedIn: boolean;
@@ -14,22 +14,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    // Clear client state and globally sign out then reload
-    try {
-      // Remove Supabase auth keys from storage
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
-          localStorage.removeItem(key);
-        }
-      });
-      Object.keys(sessionStorage).forEach((key) => {
-        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
-          sessionStorage.removeItem(key);
-        }
-      });
-      await supabase.auth.signOut({ scope: "global" });
-    } catch {}
-    window.location.href = "/auth";
+    await secureSignOut();
   };
 
   return (
