@@ -92,11 +92,23 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
 
       // Analyze the recipe (either from text or file)
       if (textToAnalyze || fileUrl) {
+        // Get the current session token for authorization
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json"
+        };
+
+        // Add authorization header if user is logged in
+        if (currentSession?.access_token) {
+          headers["Authorization"] = `Bearer ${currentSession.access_token}`;
+        }
+
         const response = await fetch(
           "https://xvtfkjjvzjjwpgrwteem.functions.supabase.co/analyze-recipe",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify({ 
               title, 
               text: textToAnalyze,
@@ -142,7 +154,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     setCurrentFileUrl(null);
   };
 
-  // Save recipe to Supabase "recipes" table
   const saveRecipe = async () => {
     if (!session?.user?.id) {
       toast({
@@ -163,7 +174,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
     setSaving(true);
     setSaveSuccess(null);
 
-    // Insert a new recipe for the current user
     const { error: dbError } = await supabase.from("recipes").insert([
       {
         user_id: session.user.id,
