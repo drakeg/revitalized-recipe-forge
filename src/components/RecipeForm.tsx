@@ -1,17 +1,9 @@
 
-import React, { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import React from "react";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
+import { useRecipeForm } from "@/hooks/useRecipeForm";
 import RecipeInputSection from "./RecipeInputSection";
 import RecipeResultSection from "./RecipeResultSection";
-import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
-import RecipeAnalysisResult from "./RecipeAnalysisResult";
-import RecipeFormHeader from "./RecipeFormHeader";
-import RecipeTextInput from "./RecipeTextInput";
-import RecipeFileInput from "./RecipeFileInput";
-import RecipeSubmitButton from "./RecipeSubmitButton";
-import { toast } from "@/hooks/use-toast";
 
 const FOOD_BG =
   "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=800&q=80";
@@ -25,194 +17,25 @@ const acceptedFileTypes =
   ".pdf,.txt,.doc,.docx,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
-  const [title, setTitle] = useState("");
-  const [recipeText, setRecipeText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [analysis, setAnalysis] = useState<string | null>(null);
-  const [error, setError] = useState<React.ReactNode | null>(null);
-//  const [error, setError] = useState<string | null>(null);
-
-  // Hide form after recipe has been analyzed
-  const [submitted, setSubmitted] = useState(false);
-  // Track saving state for "save" button
-  const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-  // Store file URL for saving to database
-  const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
-
   const { isLoggedIn: userIsLoggedIn, isPaid: userIsPaid } = useRecipeUserStatus(session);
-
-  const uploadFile = async (file: File): Promise<string | null> => {
-    if (!session?.user?.id) {
-      throw new Error("User must be logged in to upload files");
-    }
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
-
-    const { data, error } = await supabase.storage
-      .from('recipe-files')
-      .upload(fileName, file);
-
-    if (error) {
-      console.error('File upload error:', error);
-      throw new Error(`Failed to upload file: ${error.message}`);
-    }
-
-    // Get the public URL for the uploaded file
-    const { data: urlData } = supabase.storage
-      .from('recipe-files')
-      .getPublicUrl(fileName);
-
-    return urlData.publicUrl;
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-    setAnalysis(null);
-
-    try {
-      let fileUrl: string | null = null;
-      let textToAnalyze = recipeText;
-
-      // Handle file upload if a file is selected
-      if (file) {
-        if (!session?.user?.id) {
-          setError("You must be logged in to upload files.");
-          setIsSubmitting(false);
-          return;
-        }
-
-        fileUrl = await uploadFile(file);
-        setCurrentFileUrl(fileUrl);
-        console.log("File uploaded successfully:", fileUrl);
-      }
-
-      // Analyze the recipe (either from text or file)
-      if (textToAnalyze || fileUrl) {
-        // Get the current session token for authorization
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json"
-        };
-
-        // Add authorization header if user is logged in
-        if (currentSession?.access_token) {
-          headers["Authorization"] = `Bearer ${currentSession.access_token}`;
-        }
-
-        const response = await fetch(
-          "https://xvtfkjjvzjjwpgrwteem.functions.supabase.co/analyze-recipe",
-          {
-            method: "POST",
-            headers,
-            body: JSON.stringify({ 
-              title, 
-              text: textToAnalyze,
-              fileUrl: fileUrl 
-            }),
-          }
-        );
-        const resJson = await response.json();
-        if (!response.ok || resJson.error) {
-          // Handle specific error types with helpful suggestions
-          if (resJson.suggestion === "copy_paste" || resJson.suggestion === "shorten_text") {
-            setError(
-              <div className="space-y-2">
-                <div>{resJson.error}</div>
-                <div className="text-xs text-muted-foreground">
-                  💡 <strong>Tip:</strong> Try copying just the recipe ingredients and instructions from your file and pasting them in the text area above.
-                </div>
-              </div>
-            );
-          } else {
-            setError(resJson.error || "Failed to analyze recipe.");
-          }
-          setAnalysis(null);
-        } else {
-          setAnalysis(resJson.result);
-          setSubmitted(true); // Hide the form
-          
-          // If we got extracted text from the file, update our state
-          if (resJson.extractedText) {
-            setRecipeText(resJson.extractedText);
-          }
-        }
-      } else {
-        setError("Please provide recipe text or upload a file to analyze.");
-      }
-      
-      setIsSubmitting(false);
-      if (onSubmit) onSubmit({ title, text: textToAnalyze, file });
-    } catch (err: any) {
-      setIsSubmitting(false);
-      setError(err.message || "Unexpected error while analyzing.");
-      setAnalysis(null);
-    }
-  };
-
-  // Reset everything, show form again
-  const resetForm = () => {
-    setSubmitted(false);
-    setAnalysis(null);
-    setError(null);
-    setTitle("");
-    setRecipeText("");
-    setFile(null);
-    setSaveSuccess(null);
-    setCurrentFileUrl(null);
-  };
-
-  const saveRecipe = async () => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Not Signed In",
-        description: "You need to be signed in to save recipes.",
-        variant: "destructive"
-      });
-      return;
-    }
-    if (!title || !analysis) {
-      toast({
-        title: "Missing Data",
-        description: "Recipe title and analysis are required to save.",
-        variant: "destructive"
-      });
-      return;
-    }
-    setSaving(true);
-    setSaveSuccess(null);
-
-    const { error: dbError } = await supabase.from("recipes").insert([
-      {
-        user_id: session.user.id,
-        title,
-        original_text: recipeText,
-        analysis,
-        file_url: currentFileUrl,
-      },
-    ]);
-    setSaving(false);
-    if (dbError) {
-      setSaveSuccess(null);
-      toast({
-        title: "Save Failed",
-        description: dbError.message,
-        variant: "destructive"
-      });
-    } else {
-      setSaveSuccess("Recipe saved to your Recipe Book!");
-      toast({
-        title: "Recipe Saved",
-        description: "Recipe added to your personal Recipe Book.",
-        variant: "default"
-      });
-    }
-  };
+  
+  const {
+    title,
+    setTitle,
+    recipeText,
+    setRecipeText,
+    file,
+    setFile,
+    isSubmitting,
+    analysis,
+    error,
+    submitted,
+    saving,
+    saveSuccess,
+    handleFormSubmit,
+    resetForm,
+    saveRecipe
+  } = useRecipeForm(session, onSubmit);
 
   return (
     <section className="w-full max-w-xl mx-auto relative my-10 animate-fade-in">

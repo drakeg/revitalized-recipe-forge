@@ -4,6 +4,7 @@ import RecipeFormHeader from "./RecipeFormHeader";
 import RecipeTextInput from "./RecipeTextInput";
 import RecipeFileInput from "./RecipeFileInput";
 import RecipeSubmitButton from "./RecipeSubmitButton";
+import RecipeFormError from "./RecipeFormError";
 
 interface RecipeInputSectionProps {
   title: string;
@@ -86,9 +87,7 @@ const RecipeInputSection: React.FC<RecipeInputSectionProps> = ({
           disabled={isSubmitting || (!recipeText && !file) || !title}
         />
       </form>
-      {error && (
-        <div className="mt-4 text-center text-destructive text-sm font-semibold">{error}</div>
-      )}
+      <RecipeFormError error={error} />
     </>
   );
 };
