@@ -1,17 +1,17 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, Trash2, Share2, Search, Tag, X } from "lucide-react";
-import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Edit, Trash2, Share2, Search, Plus, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RecipeViewModal from "./RecipeViewModal";
 import RecipeShareModal from "./RecipeShareModal";
-import RecipeCategoryManager from "./RecipeCategoryManager";
+import AddToShoppingListModal from "./AddToShoppingListModal";
+
+// ... keep existing code (interfaces and component start)
 
 interface Recipe {
   id: string;
@@ -32,6 +32,8 @@ interface RecipeGridProps {
   loading: boolean;
   onDeleteRecipe: (recipeId: string) => void;
   onRefresh: () => void;
+  session: any;
+  onEdit: (recipe: Recipe) => void;
 }
 
 const RecipeGrid: React.FC<RecipeGridProps> = ({
@@ -39,6 +41,8 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
   loading,
   onDeleteRecipe,
   onRefresh,
+  session,
+  onEdit,
 }) => {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [shareRecipe, setShareRecipe] = useState<Recipe | null>(null);
@@ -48,6 +52,10 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [recipeCategories, setRecipeCategories] = useState<Record<string, Category[]>>({});
   const { toast } = useToast();
+
+  // State for Add To Shopping List Modal
+  const [showAddToShoppingModal, setShowAddToShoppingModal] = useState(false);
+  const [selectedRecipeForShopping, setSelectedRecipeForShopping] = useState<Recipe | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -108,25 +116,22 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
     setSelectedCategory("all");
   };
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
+  const handleViewRecipe = (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+  };
+
+  const handleShareRecipe = (recipe: Recipe) => {
+    setShareRecipe(recipe);
+  };
+
+  const handleDeleteRecipe = (recipeId: string) => {
+    onDeleteRecipe(recipeId);
+  };
+
+  const handleAddToShoppingList = (recipe: Recipe) => {
+    setSelectedRecipeForShopping(recipe);
+    setShowAddToShoppingModal(true);
+  };
 
   return (
     <>
@@ -224,7 +229,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSelectedRecipe(recipe)}
+                  onClick={() => handleViewRecipe(recipe)}
                   className="flex-1 flex items-center gap-1"
                 >
                   <Eye className="w-4 h-4" />
@@ -233,15 +238,34 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShareRecipe(recipe)}
+                  onClick={() => onEdit(recipe)}
                   className="flex items-center gap-1"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Edit className="w-4 h-4" />
+                  Edit
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onDeleteRecipe(recipe.id)}
+                  onClick={() => handleShareRecipe(recipe)}
+                  className="flex items-center gap-1"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddToShoppingList(recipe)}
+                  className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  Add to List
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteRecipe(recipe.id)}
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -276,7 +300,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
       {selectedRecipe && (
         <RecipeViewModal
           recipe={selectedRecipe}
-          isOpen={!!selectedRecipe}
+          isOpen={true}
           onClose={() => setSelectedRecipe(null)}
         />
       )}
@@ -284,7 +308,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
       {shareRecipe && (
         <RecipeShareModal
           recipe={shareRecipe}
-          isOpen={!!shareRecipe}
+          isOpen={true}
           onClose={() => setShareRecipe(null)}
           onRefresh={onRefresh}
         />
@@ -293,7 +317,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
       {categoryManagerRecipe && (
         <RecipeCategoryManager
           recipeId={categoryManagerRecipe}
-          isOpen={!!categoryManagerRecipe}
+          isOpen={true}
           onClose={() => setCategoryManagerRecipe(null)}
           onUpdate={() => {
             fetchRecipeCategories();
@@ -301,6 +325,14 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
           }}
         />
       )}
+
+      {/* Add To Shopping List Modal */}
+      <AddToShoppingListModal
+        isOpen={showAddToShoppingModal}
+        onClose={() => setShowAddToShoppingModal(false)}
+        recipe={selectedRecipeForShopping}
+        session={session}
+      />
     </>
   );
 };
