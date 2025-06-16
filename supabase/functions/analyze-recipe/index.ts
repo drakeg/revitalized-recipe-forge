@@ -47,7 +47,7 @@ serve(async (req: Request) => {
             error: "Could not extract recipe content from the URL. Please try copying and pasting the recipe text instead." 
           }), {
             status: 400,
-            headers: corsHeaders,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
@@ -59,7 +59,7 @@ serve(async (req: Request) => {
           error: "Failed to fetch recipe from URL. Please check the URL or try copying and pasting the recipe text instead." 
         }), {
           status: 400,
-          headers: corsHeaders,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
@@ -97,7 +97,7 @@ serve(async (req: Request) => {
               error: "Could not extract readable text from PDF. Please try copying and pasting the recipe text instead." 
             }), {
               status: 400,
-              headers: corsHeaders,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
         } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
@@ -115,7 +115,7 @@ serve(async (req: Request) => {
               error: "Could not extract readable text from document. Please try copying and pasting the recipe text instead." 
             }), {
               status: 400,
-              headers: corsHeaders,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
         } else {
@@ -123,7 +123,7 @@ serve(async (req: Request) => {
             error: "Unsupported file format. Please use PDF, DOC, DOCX, or TXT files." 
           }), {
             status: 400,
-            headers: corsHeaders,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
@@ -138,7 +138,7 @@ serve(async (req: Request) => {
             suggestion: "copy_paste"
           }), {
             status: 400,
-            headers: corsHeaders,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       } catch (fileError) {
@@ -147,7 +147,7 @@ serve(async (req: Request) => {
           error: "Failed to process uploaded file. Please try copying and pasting the recipe text instead." 
         }), {
           status: 400,
-          headers: corsHeaders,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
@@ -160,14 +160,14 @@ serve(async (req: Request) => {
         maxLength: MAX_TEXT_LENGTH
       }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (!textToAnalyze && !title) {
       return new Response(JSON.stringify({ error: "Recipe title or text is required." }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -175,7 +175,7 @@ serve(async (req: Request) => {
     if (!deepseekApiKey) {
       return new Response(JSON.stringify({ error: "Deepseek API key not configured." }), {
         status: 500,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -221,7 +221,7 @@ ${textToAnalyze ? textToAnalyze : ""}`;
           suggestion: "shorten_text"
         }), {
           status: 400,
-          headers: corsHeaders,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       throw new Error(data.error?.message || "Error processing Deepseek request.");
@@ -240,7 +240,7 @@ ${textToAnalyze ? textToAnalyze : ""}`;
     console.error("Error in analyze-recipe (Deepseek):", error);
     return new Response(
       JSON.stringify({ error: error.message || "Unexpected error." }),
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
