@@ -49,11 +49,11 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [session, setSession] = React.useState<Session | null>(null);
-  const [user, setUser] = React.useState<User | null>(null);
-  const [ready, setReady] = React.useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Set up the auth state listener first for proper session persistence
     const {
       data: { subscription },
