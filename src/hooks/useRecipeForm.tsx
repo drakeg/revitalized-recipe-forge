@@ -16,12 +16,10 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
   const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
 
   const uploadFile = async (file: File): Promise<string | null> => {
-    if (!session?.user?.id) {
-      throw new Error("User must be logged in to upload files");
-    }
-
+    // For anonymous users, we'll create a temporary file upload
+    const userPrefix = session?.user?.id || 'anonymous';
     const fileExt = file.name.split('.').pop();
-    const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
+    const fileName = `${userPrefix}/${Date.now()}.${fileExt}`;
 
     const { data, error } = await supabase.storage
       .from('recipe-files')
@@ -50,12 +48,6 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
       let textToAnalyze = recipeText;
 
       if (file) {
-        if (!session?.user?.id) {
-          setError("You must be logged in to upload files.");
-          setIsSubmitting(false);
-          return;
-        }
-
         fileUrl = await uploadFile(file);
         setCurrentFileUrl(fileUrl);
         console.log("File uploaded successfully:", fileUrl);
