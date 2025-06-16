@@ -23,12 +23,59 @@ interface ShoppingList {
   title: string;
 }
 
+interface ParsedIngredient {
+  original: string;
+  quantity: string | null;
+  unit: string | null;
+  ingredient: string;
+}
+
 interface AddToShoppingListModalProps {
   isOpen: boolean;
   onClose: () => void;
   recipe: Recipe | null;
   session: Session | null;
 }
+
+// Helper function to parse ingredient strings into quantity, unit, and ingredient
+const parseIngredient = (ingredientText: string): ParsedIngredient => {
+  // Remove common bullet points and clean the text
+  const cleaned = ingredientText.replace(/^[-•*\d.)\s]+/, '').trim();
+  
+  // Regular expression to match quantity, unit, and ingredient
+  // Matches patterns like: "2 cups flour", "1/2 tsp salt", "3 large eggs", "200g butter"
+  const match = cleaned.match(/^(\d+(?:\/\d+)?(?:\.\d+)?)\s*([a-zA-Z]*)\s+(.+)$/);
+  
+  if (match) {
+    const [, quantity, unit, ingredient] = match;
+    return {
+      original: ingredientText,
+      quantity: quantity.trim(),
+      unit: unit.trim() || null,
+      ingredient: ingredient.trim()
+    };
+  }
+  
+  // Try to match just quantity and ingredient (no unit)
+  const quantityMatch = cleaned.match(/^(\d+(?:\/\d+)?(?:\.\d+)?)\s+(.+)$/);
+  if (quantityMatch) {
+    const [, quantity, ingredient] = quantityMatch;
+    return {
+      original: ingredientText,
+      quantity: quantity.trim(),
+      unit: null,
+      ingredient: ingredient.trim()
+    };
+  }
+  
+  // If no quantity found, return the whole thing as ingredient
+  return {
+    original: ingredientText,
+    quantity: null,
+    unit: null,
+    ingredient: cleaned
+  };
+};
 
 const AddToShoppingListModal: React.FC<AddToShoppingListModalProps> = ({
   isOpen,
@@ -38,7 +85,7 @@ const AddToShoppingListModal: React.FC<AddToShoppingListModalProps> = ({
 }) => {
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
   const [selectedList, setSelectedList] = useState("");
-  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredients, setIngredients] = useState<ParsedIngredient[]>([]);
   const [selectedIngredients, setSelectedIngredients] = useState<Set<string>>(new Set());
   const [newListName, setNewListName] = useState("");
   const [showCreateNew, setShowCreateNew] = useState(false);
@@ -82,21 +129,20 @@ const AddToShoppingListModal: React.FC<AddToShoppingListModalProps> = ({
     );
     
     if (ingredientSection !== -1) {
-      const extractedIngredients: string[] = [];
+      const extractedIngredients: ParsedIngredient[] = [];
       for (let i = ingredientSection + 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         if (line.toLowerCase().includes('instructions') || 
             line.toLowerCase().includes('direction')) break;
         
-        // Clean up ingredient line (remove bullets, numbers, etc.)
-        const cleanIngredient = line.replace(/^[-•*\d.)\s]+/, '').trim();
-        if (cleanIngredient && cleanIngredient.length > 2) {
-          extractedIngredients.push(cleanIngredient);
+        const parsedIngredient = parseIngredient(line);
+        if (parsedIngredient.ingredient && parsedIngredient.ingredient.length > 2) {
+          extractedIngredients.push(parsedIngredient);
         }
       }
       setIngredients(extractedIngredients);
-      setSelectedIngredients(new Set(extractedIngredients)); // Select all by default
+      setSelectedIngredients(new Set(extractedIngredients.map(ing => ing.original))); // Select all by default
     }
   };
 
@@ -161,9 +207,15 @@ const AddToShoppingListModal: React.FC<AddToShoppingListModalProps> = ({
 
     setLoading(true);
     try {
-      const ingredientItems = Array.from(selectedIngredients).map(ingredient => ({
+      const selectedParsedIngredients = ingredients.filter(ing => 
+        selectedIngredients.has(ing.original)
+      );
+
+      const ingredientItems = selectedParsedIngredients.map(parsed => ({
         shopping_list_id: selectedList,
-        ingredient,
+        ingredient: parsed.ingredient,
+        quantity: parsed.quantity,
+        unit: parsed.unit,
         recipe_id: recipe!.id
       }));
 
@@ -190,12 +242,12 @@ const AddToShoppingListModal: React.FC<AddToShoppingListModalProps> = ({
     }
   };
 
-  const toggleIngredient = (ingredient: string) => {
+  const toggleIngredient = (original: string) => {
     const newSelected = new Set(selectedIngredients);
-    if (newSelected.has(ingredient)) {
-      newSelected.delete(ingredient);
+    if (newSelected.has(original)) {
+      newSelected.delete(original);
     } else {
-      newSelected.add(ingredient);
+      newSelected.add(original);
     }
     setSelectedIngredients(newSelected);
   };
@@ -204,8 +256,16 @@ const AddToShoppingListModal: React.FC<AddToShoppingListModalProps> = ({
     if (selectedIngredients.size === ingredients.length) {
       setSelectedIngredients(new Set());
     } else {
-      setSelectedIngredients(new Set(ingredients));
+      setSelectedIngredients(new Set(ingredients.map(ing => ing.original)));
     }
+  };
+
+  const formatIngredientDisplay = (parsed: ParsedIngredient) => {
+    let display = parsed.ingredient;
+    if (parsed.quantity) {
+      display = `${parsed.quantity}${parsed.unit ? ` ${parsed.unit}` : ''} ${parsed.ingredient}`;
+    }
+    return display;
   };
 
   if (!recipe) return null;
@@ -280,13 +340,15 @@ const AddToShoppingListModal: React.FC<AddToShoppingListModalProps> = ({
               <Card>
                 <CardContent className="p-3 max-h-48 overflow-y-auto">
                   <div className="space-y-2">
-                    {ingredients.map((ingredient, index) => (
+                    {ingredients.map((parsed, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <Checkbox
-                          checked={selectedIngredients.has(ingredient)}
-                          onCheckedChange={() => toggleIngredient(ingredient)}
+                          checked={selectedIngredients.has(parsed.original)}
+                          onCheckedChange={() => toggleIngredient(parsed.original)}
                         />
-                        <span className="text-sm flex-1">{ingredient}</span>
+                        <span className="text-sm flex-1">
+                          {formatIngredientDisplay(parsed)}
+                        </span>
                       </div>
                     ))}
                   </div>
