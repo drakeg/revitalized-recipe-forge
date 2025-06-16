@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -52,6 +51,10 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditRecipe = (recipe: Recipe) => {
+    navigate("/");
   };
 
   const handleDeleteRecipe = async (recipeId: string) => {
@@ -114,6 +117,8 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
           loading={loading} 
           onDeleteRecipe={handleDeleteRecipe}
           onRefresh={fetchRecipes}
+          session={session}
+          onEdit={handleEditRecipe}
         />
       </main>
     </div>
