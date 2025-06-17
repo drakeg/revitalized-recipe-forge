@@ -50,6 +50,8 @@ const AuthPage: React.FC = () => {
         if (data?.user?.id) {
           await updateProfileUsername(data.user.id, email);
         }
+        // Page reload ensures a fully clean state after auth
+        window.location.href = "/";
       } else {
         const redirectUrl = `${window.location.origin}/`;
         const { data, error } = await supabase.auth.signUp({
@@ -60,17 +62,22 @@ const AuthPage: React.FC = () => {
           },
         });
         if (error) throw error;
-        // On initial signup, try to set username (may fail if confirmation needed, so it's fine)
-        if (data?.user?.id) {
-          await updateProfileUsername(data.user.id, email);
+        
+        // Check if user needs to confirm email
+        if (data.user && !data.user.email_confirmed_at) {
+          setSuccess(
+            "Account created successfully! Please check your email and click the confirmation link to complete your registration."
+          );
+        } else {
+          // Email already confirmed or confirmation not required
+          if (data?.user?.id) {
+            await updateProfileUsername(data.user.id, email);
+          }
+          window.location.href = "/";
         }
-        setSuccess(
-          "Account created! Please check your email to confirm your address before logging in."
-        );
       }
-      // Page reload ensures a fully clean state after auth
-      window.location.href = "/";
     } catch (err: any) {
+      console.error("Auth error:", err);
       setError(err?.message || "Authentication error");
     }
     setSubmitting(false);
