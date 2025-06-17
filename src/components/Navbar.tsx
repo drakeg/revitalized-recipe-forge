@@ -105,10 +105,11 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
               </>
             ) : (
               <>
-                <span className="text-emerald-800 mr-3 hidden sm:inline text-sm font-semibold flex items-center gap-2">
-                  {userEmail}
-                  {!loading && isPaid && <Badge className="bg-yellow-500 text-yellow-900"><Crown size={12} /> Pro</Badge>}
-                </span>
+                {!loading && isPaid && (
+                  <Badge className="bg-yellow-500 text-yellow-900 mr-2">
+                    <Crown size={12} className="mr-1" /> Pro
+                  </Badge>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
