@@ -235,20 +235,13 @@ ${textToAnalyze ? textToAnalyze : ""}`;
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-    } catch (error) {
-      console.error("Error in analyze-recipe (Deepseek):", error);
-      return new Response(
-        JSON.stringify({ error: error.message || "Unexpected error." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  } catch (error) {
+    console.error("Error in analyze-recipe (Deepseek):", error);
+    return new Response(
+      JSON.stringify({ error: error.message || "Unexpected error." }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-
-  // Method not allowed
-  return new Response(
-    JSON.stringify({ error: "Method not allowed" }),
-    { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
 });
 
 function extractRecipeFromHtml(html: string): string {
