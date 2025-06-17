@@ -98,23 +98,35 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
+          first_name: string | null
           id: string
           is_paid: boolean
+          last_name: string | null
+          phone: string | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          first_name?: string | null
           id: string
           is_paid?: boolean
+          last_name?: string | null
+          phone?: string | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          first_name?: string | null
           id?: string
           is_paid?: boolean
+          last_name?: string | null
+          phone?: string | null
           username?: string | null
         }
         Relationships: []

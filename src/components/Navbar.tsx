@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogIn, LogOut, UserPlus, LayoutDashboard, Calendar, ShoppingCart, Crown } from "lucide-react";
+import { LogIn, LogOut, UserPlus, LayoutDashboard, Calendar, ShoppingCart, Crown, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { secureSignOut } from "@/utils/authUtils";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
@@ -109,6 +109,15 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
                   {userEmail}
                   {!loading && isPaid && <Badge className="bg-yellow-500 text-yellow-900"><Crown size={12} /> Pro</Badge>}
                 </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
+                  onClick={() => navigate("/profile")}
+                >
+                  <User size={16} />
+                  Profile
+                </Button>
                 {!loading && isPaid && (
                   <Button
                     variant="outline"
