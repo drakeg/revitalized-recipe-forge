@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import RecipeViewModal from "./RecipeViewModal";
 import RecipeShareModal from "./RecipeShareModal";
 import AddToShoppingListModal from "./AddToShoppingListModal";
 import RecipeCategoryManager from "./RecipeCategoryManager";
+import StarRating from "@/components/rating/StarRating";
 
 interface Recipe {
   id: string;
@@ -52,6 +52,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categories, setCategories] = useState<Category[]>([]);
   const [recipeCategories, setRecipeCategories] = useState<Record<string, Category[]>>({});
+  const [recipeRatings, setRecipeRatings] = useState<Record<string, { average: number; count: number }>>({});
   const { toast } = useToast();
 
   // State for Add To Shopping List Modal
@@ -62,6 +63,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
     fetchCategories();
     if (recipes.length > 0) {
       fetchRecipeCategories();
+      fetchRecipeRatings();
     }
   }, [recipes]);
 
@@ -102,6 +104,34 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
       setRecipeCategories(categoryMap);
     } catch (error: any) {
       console.error("Failed to fetch recipe categories:", error);
+    }
+  };
+
+  const fetchRecipeRatings = async () => {
+    try {
+      const ratingsPromises = recipes.map(async (recipe) => {
+        const { data, error } = await supabase
+          .rpc("get_recipe_rating_stats", { recipe_id_param: recipe.id });
+
+        if (error) throw error;
+
+        return {
+          recipeId: recipe.id,
+          average: data?.[0]?.average_rating || 0,
+          count: data?.[0]?.total_ratings || 0,
+        };
+      });
+
+      const ratingsData = await Promise.all(ratingsPromises);
+      const ratingsMap: Record<string, { average: number; count: number }> = {};
+      
+      ratingsData.forEach(({ recipeId, average, count }) => {
+        ratingsMap[recipeId] = { average, count };
+      });
+
+      setRecipeRatings(ratingsMap);
+    } catch (error: any) {
+      console.error("Failed to fetch recipe ratings:", error);
     }
   };
 
@@ -229,6 +259,20 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
               )}
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Rating Display */}
+              {recipeRatings[recipe.id] && recipeRatings[recipe.id].count > 0 && (
+                <div className="flex items-center gap-2">
+                  <StarRating
+                    rating={recipeRatings[recipe.id].average}
+                    readonly
+                    size="sm"
+                  />
+                  <span className="text-sm text-gray-600">
+                    ({recipeRatings[recipe.id].count})
+                  </span>
+                </div>
+              )}
+              
               <p className="text-sm text-emerald-600">
                 Created {format(new Date(recipe.created_at), "MMM d, yyyy")}
               </p>
@@ -313,6 +357,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
           recipe={selectedRecipe}
           isOpen={true}
           onClose={() => setSelectedRecipe(null)}
+          session={session}
         />
       )}
 
