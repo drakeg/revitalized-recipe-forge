@@ -20,30 +20,62 @@ serve(async (req) => {
 
   try {
     logStep("Function started");
+    logStep("Request method", { method: req.method });
+    logStep("Request headers", { 
+      origin: req.headers.get("origin"),
+      authorization: req.headers.get("Authorization") ? "Bearer [REDACTED]" : "No auth header",
+      contentType: req.headers.get("content-type")
+    });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
+    if (!stripeKey) {
+      logStep("ERROR: STRIPE_SECRET_KEY is not set");
+      throw new Error("STRIPE_SECRET_KEY is not set");
+    }
+    logStep("Stripe key verified", { keyLength: stripeKey.length });
 
     // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    logStep("Environment variables check", {
+      supabaseUrl: supabaseUrl ? "Set" : "Missing",
+      supabaseAnonKey: supabaseAnonKey ? "Set" : "Missing"
+    });
+
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      supabaseUrl ?? "",
+      supabaseAnonKey ?? ""
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      logStep("ERROR: No authorization header provided");
+      throw new Error("No authorization header provided");
+    }
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    logStep("Extracting user from token");
+    
+    const { data, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError) {
+      logStep("ERROR: Authentication failed", { error: authError.message });
+      throw new Error(`Authentication error: ${authError.message}`);
+    }
+    
     const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
+    if (!user?.email) {
+      logStep("ERROR: User not authenticated or email not available");
+      throw new Error("User not authenticated or email not available");
+    }
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    logStep("Stripe client initialized");
     
     // Check if customer already exists
+    logStep("Looking up existing customer");
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
@@ -54,9 +86,9 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "https://xvtfkjjvzjjwpgrwteem.supabase.co";
-    logStep("Creating checkout session", { origin });
+    logStep("Creating checkout session", { origin, customerId: customerId || "New customer" });
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionData = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -79,9 +111,22 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
       },
+    };
+
+    logStep("Session data prepared", { 
+      mode: sessionData.mode,
+      lineItemsCount: sessionData.line_items.length,
+      successUrl: sessionData.success_url,
+      cancelUrl: sessionData.cancel_url
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    const session = await stripe.checkout.sessions.create(sessionData);
+
+    logStep("Checkout session created successfully", { 
+      sessionId: session.id, 
+      url: session.url,
+      status: session.status
+    });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -89,8 +134,17 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in create-checkout", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    logStep("ERROR in create-checkout", { 
+      message: errorMessage,
+      stack: errorStack,
+      type: error?.constructor?.name
+    });
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      details: "Check function logs for more information"
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
