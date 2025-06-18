@@ -91,7 +91,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
 
   return (
     <>
-      <nav className="w-full bg-gradient-to-r from-emerald-400/80 via-lime-200/70 to-yellow-100/90 border-b shadow-sm backdrop-blur">
+      <nav className="w-full bg-gradient-to-r from-emerald-400/80 via-lime-200/70 to-yellow-100/90 border-b shadow-sm backdrop-blur relative z-50">
         <div className="container mx-auto flex items-center justify-between py-3 px-4">
           <div 
             className="font-bold text-lg tracking-tight text-green-900 drop-shadow-sm flex gap-1 items-center cursor-pointer"
@@ -197,7 +197,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
                         <Menu size={16} />
                         <span className="ml-1 hidden sm:inline">Menu</span>
                       </NavigationMenuTrigger>
-                      <NavigationMenuContent>
+                      <NavigationMenuContent className="bg-white/95 backdrop-blur-sm shadow-lg border border-emerald-200 rounded-lg mt-2 z-50">
                         <div className="grid gap-3 p-4 w-[300px]">
                           {!loading && isPaid && (
                             <div className="flex items-center gap-2 mb-2">
