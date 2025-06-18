@@ -98,7 +98,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
                   variant="default"
                   size="sm"
                   className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white transition-all"
-                  onClick={() => navigate("/auth")}
+                  onClick={() => navigate("/auth?view=signup")}
                 >
                   <UserPlus size={16} />
                   Sign up

@@ -1,11 +1,14 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const AuthPage: React.FC = () => {
-  const [view, setView] = useState<"login" | "signup">("login");
+  const [searchParams] = useSearchParams();
+  const initialView = searchParams.get('view') === 'signup' ? 'signup' : 'login';
+  
+  const [view, setView] = useState<"login" | "signup">(initialView);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
