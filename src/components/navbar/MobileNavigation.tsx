@@ -1,5 +1,4 @@
 
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +41,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <NavigationMenuTrigger className="bg-emerald-100 border-emerald-400 text-emerald-900 hover:bg-emerald-200 px-3">
               <Menu size={18} />
             </NavigationMenuTrigger>
-            <NavigationMenuContent className="bg-white/95 backdrop-blur-sm shadow-lg border border-emerald-200 rounded-lg mt-2 z-50 right-0 w-[280px] absolute">
+            <NavigationMenuContent className="bg-white/95 backdrop-blur-sm shadow-lg border border-emerald-200 rounded-lg mt-2 z-50 w-[280px] right-0">
               <div className="grid gap-3 p-4">
                 {!loading && isPaid && (
                   <div className="flex items-center gap-2 mb-2">
@@ -95,4 +94,3 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 };
 
 export default MobileNavigation;
-
