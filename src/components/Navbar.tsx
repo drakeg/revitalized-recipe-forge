@@ -92,7 +92,6 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
               <DesktopNavigation
                 isPaid={isPaid}
                 loading={loading}
-                onProfileClick={() => navigate("/account")}
                 onDashboardClick={() => navigate("/dashboard")}
                 onMealPlansClick={() => handlePremiumFeatureClick("Meal Plans")}
                 onShoppingListsClick={() => handlePremiumFeatureClick("Shopping Lists")}
@@ -102,7 +101,6 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
               <MobileNavigation
                 isPaid={isPaid}
                 loading={loading}
-                onProfileClick={() => handleNavClick("/account")}
                 onDashboardClick={() => handleNavClick("/dashboard")}
                 onMealPlansClick={() => handlePremiumFeatureClick("Meal Plans")}
                 onShoppingListsClick={() => handlePremiumFeatureClick("Shopping Lists")}

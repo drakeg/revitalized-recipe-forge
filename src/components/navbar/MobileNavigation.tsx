@@ -2,13 +2,11 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, LayoutDashboard, Calendar, ShoppingCart, Crown, LogOut, Menu } from "lucide-react";
-import SubscriptionManager from "../SubscriptionManager";
+import { LayoutDashboard, Calendar, ShoppingCart, Crown, LogOut, Menu } from "lucide-react";
 
 interface MobileNavigationProps {
   isPaid: boolean;
   loading: boolean;
-  onProfileClick: () => void;
   onDashboardClick: () => void;
   onMealPlansClick: () => void;
   onShoppingListsClick: () => void;
@@ -19,7 +17,6 @@ interface MobileNavigationProps {
 const MobileNavigation: React.FC<MobileNavigationProps> = ({
   isPaid,
   loading,
-  onProfileClick,
   onDashboardClick,
   onMealPlansClick,
   onShoppingListsClick,
@@ -61,26 +58,13 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 variant="ghost"
                 className="justify-start"
                 onClick={() => {
-                  onProfileClick();
+                  onDashboardClick();
                   setIsOpen(false);
                 }}
               >
-                <User size={16} className="mr-2" />
-                Account
+                <LayoutDashboard size={16} className="mr-2" />
+                Dashboard
               </Button>
-              {isPaid && (
-                <Button
-                  variant="ghost"
-                  className="justify-start"
-                  onClick={() => {
-                    onDashboardClick();
-                    setIsOpen(false);
-                  }}
-                >
-                  <LayoutDashboard size={16} className="mr-2" />
-                  Dashboard
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 className={`justify-start ${!isPaid ? 'opacity-60' : ''}`}

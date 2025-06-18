@@ -2,13 +2,11 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, LayoutDashboard, Calendar, ShoppingCart, Crown, LogOut } from "lucide-react";
-import SubscriptionManager from "../SubscriptionManager";
+import { LayoutDashboard, Calendar, ShoppingCart, Crown, LogOut } from "lucide-react";
 
 interface DesktopNavigationProps {
   isPaid: boolean;
   loading: boolean;
-  onProfileClick: () => void;
   onDashboardClick: () => void;
   onMealPlansClick: () => void;
   onShoppingListsClick: () => void;
@@ -19,7 +17,6 @@ interface DesktopNavigationProps {
 const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
   isPaid,
   loading,
-  onProfileClick,
   onDashboardClick,
   onMealPlansClick,
   onShoppingListsClick,
@@ -39,22 +36,11 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
           variant="outline"
           size="sm"
           className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
-          onClick={onProfileClick}
+          onClick={onDashboardClick}
         >
-          <User size={16} />
-          Account
+          <LayoutDashboard size={16} />
+          Dashboard
         </Button>
-        {isPaid && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
-            onClick={onDashboardClick}
-          >
-            <LayoutDashboard size={16} />
-            Dashboard
-          </Button>
-        )}
         <Button
           variant="outline"
           size="sm"

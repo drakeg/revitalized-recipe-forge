@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,9 +8,7 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Account from "./pages/Account";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
 import MealPlanning from "./pages/MealPlanning";
 import MealPlanView from "./pages/MealPlanView";
 import ShoppingLists from "./pages/ShoppingLists";
@@ -49,9 +48,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index session={session} />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/account" element={<Account session={session} />} />
             <Route path="/dashboard" element={<Dashboard session={session} />} />
-            <Route path="/profile" element={<Profile session={session} />} />
             <Route path="/meal-planning" element={<MealPlanning session={session} />} />
             <Route path="/meal-plan/:id" element={<MealPlanView session={session} />} />
             <Route path="/shopping-lists" element={<ShoppingLists session={session} />} />
