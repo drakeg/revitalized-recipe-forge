@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,19 +41,8 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
           onClick={onProfileClick}
         >
           <User size={16} />
-          Profile
+          Account
         </Button>
-        {!loading && isPaid && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 border-emerald-400 text-emerald-900 hover:bg-emerald-100"
-            onClick={onDashboardClick}
-          >
-            <LayoutDashboard size={16} />
-            Dashboard
-          </Button>
-        )}
         <Button
           variant="outline"
           size="sm"
@@ -75,10 +63,6 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
           Shopping
           {!loading && !isPaid && <Crown size={12} className="text-yellow-600 ml-1" />}
         </Button>
-        <SubscriptionManager 
-          isPaid={isPaid} 
-          onRefreshStatus={refreshSubscription} 
-        />
         <Button
           variant="ghost"
           size="sm"

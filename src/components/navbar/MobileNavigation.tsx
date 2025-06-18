@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,18 +56,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   onClick={onProfileClick}
                 >
                   <User size={16} className="mr-2" />
-                  Profile
+                  Account
                 </Button>
-                {!loading && isPaid && (
-                  <Button
-                    variant="ghost"
-                    className="justify-start"
-                    onClick={onDashboardClick}
-                  >
-                    <LayoutDashboard size={16} className="mr-2" />
-                    Dashboard
-                  </Button>
-                )}
                 <Button
                   variant="ghost"
                   className="justify-start"
@@ -87,12 +76,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   Shopping Lists
                   {!loading && !isPaid && <Crown size={12} className="text-yellow-600 ml-auto" />}
                 </Button>
-                <div className="pt-2 border-t">
-                  <SubscriptionManager 
-                    isPaid={isPaid} 
-                    onRefreshStatus={refreshSubscription} 
-                  />
-                </div>
                 <Button
                   variant="ghost"
                   className="justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
