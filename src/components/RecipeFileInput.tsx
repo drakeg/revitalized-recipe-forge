@@ -20,9 +20,12 @@ const RecipeFileInput: React.FC<RecipeFileInputProps> = ({
     >
       Upload Recipe File
       <span className="text-muted-foreground ml-2">
-        (PDF, DOC, DOCX, TXT)
+        (PDF, DOC, DOCX, TXT - for analysis only)
       </span>
     </label>
+    <div className="text-xs text-muted-foreground mb-2">
+      Files are uploaded temporarily for analysis and are not stored permanently.
+    </div>
     <input
       id="recipe-file"
       type="file"

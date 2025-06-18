@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -16,10 +17,10 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
   const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
 
   const uploadFile = async (file: File): Promise<string | null> => {
-    // For anonymous users, we'll create a temporary file upload
-    const userPrefix = session?.user?.id || 'anonymous';
+    // Create a temporary file upload with timestamp for uniqueness
+    const timestamp = Date.now();
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userPrefix}/${Date.now()}.${fileExt}`;
+    const fileName = `temp/${timestamp}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     const { data, error } = await supabase.storage
       .from('recipe-files')
@@ -50,7 +51,7 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
       if (file) {
         fileUrl = await uploadFile(file);
         setCurrentFileUrl(fileUrl);
-        console.log("File uploaded successfully:", fileUrl);
+        console.log("File uploaded successfully for analysis:", fileUrl);
       }
 
       if (textToAnalyze || fileUrl || url) {
@@ -171,7 +172,8 @@ export const useRecipeForm = (session?: any, onSubmit?: (data: { title: string; 
         title,
         original_text: recipeText,
         analysis,
-        file_url: currentFileUrl,
+        // Don't save temporary file URLs to database
+        file_url: null,
         source_url: url,
       };
 
