@@ -95,6 +95,68 @@ export type Database = {
           },
         ]
       }
+      private_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          recipe_id: string | null
+          recipient_id: string
+          sender_id: string
+          swap_request_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          recipe_id?: string | null
+          recipient_id: string
+          sender_id: string
+          swap_request_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          recipe_id?: string | null
+          recipient_id?: string
+          sender_id?: string
+          swap_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_messages_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_messages_swap_request_id_fkey"
+            columns: ["swap_request_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_swap_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -188,6 +250,190 @@ export type Database = {
           },
         ]
       }
+      recipe_collection_items: {
+        Row: {
+          added_by: string
+          collection_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          recipe_id: string
+        }
+        Insert: {
+          added_by: string
+          collection_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recipe_id: string
+        }
+        Update: {
+          added_by?: string
+          collection_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_collection_items_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_collection_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_collections: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_collaborative: boolean
+          is_public: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_collaborative?: boolean
+          is_public?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_collaborative?: boolean
+          is_public?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_collections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_contributors: {
+        Row: {
+          contribution_type: string
+          created_at: string
+          id: string
+          permissions: string[]
+          recipe_id: string
+          user_id: string
+        }
+        Insert: {
+          contribution_type: string
+          created_at?: string
+          id?: string
+          permissions?: string[]
+          recipe_id: string
+          user_id: string
+        }
+        Update: {
+          contribution_type?: string
+          created_at?: string
+          id?: string
+          permissions?: string[]
+          recipe_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_contributors_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_contributors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_gifts: {
+        Row: {
+          created_at: string
+          gift_message: string | null
+          giver_id: string
+          id: string
+          is_opened: boolean
+          recipe_id: string
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          gift_message?: string | null
+          giver_id: string
+          id?: string
+          is_opened?: boolean
+          recipe_id: string
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          gift_message?: string | null
+          giver_id?: string
+          id?: string
+          is_opened?: boolean
+          recipe_id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_gifts_giver_id_fkey"
+            columns: ["giver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_gifts_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_gifts_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_ratings: {
         Row: {
           created_at: string
@@ -227,6 +473,71 @@ export type Database = {
           {
             foreignKeyName: "recipe_ratings_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_swap_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          offered_recipe_id: string | null
+          requested_recipe_id: string | null
+          requester_id: string
+          status: string
+          target_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          offered_recipe_id?: string | null
+          requested_recipe_id?: string | null
+          requester_id: string
+          status?: string
+          target_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          offered_recipe_id?: string | null
+          requested_recipe_id?: string | null
+          requester_id?: string
+          status?: string
+          target_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_swap_requests_offered_recipe_id_fkey"
+            columns: ["offered_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_swap_requests_requested_recipe_id_fkey"
+            columns: ["requested_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_swap_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_swap_requests_target_user_id_fkey"
+            columns: ["target_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -402,6 +713,50 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          allergens: string[] | null
+          cooking_skill_level: string | null
+          cooking_time_preference: string | null
+          created_at: string
+          dietary_restrictions: string[] | null
+          id: string
+          preferred_cuisines: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          cooking_skill_level?: string | null
+          cooking_time_preference?: string | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          id?: string
+          preferred_cuisines?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allergens?: string[] | null
+          cooking_skill_level?: string | null
+          cooking_time_preference?: string | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          id?: string
+          preferred_cuisines?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
