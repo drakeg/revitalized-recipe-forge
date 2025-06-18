@@ -148,8 +148,8 @@ const MealPlanning: React.FC<MealPlanningProps> = ({ session }) => {
                 <li>✅ Save unlimited recipes</li>
               </ul>
               <SubscriptionManager 
-                session={session} 
-                onSubscriptionChange={refreshSubscription}
+                isPaid={isPaid} 
+                onRefreshStatus={refreshSubscription}
               />
             </div>
           </div>

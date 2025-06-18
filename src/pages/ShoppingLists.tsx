@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -143,8 +142,8 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
                 <li>✅ Check off items as you shop</li>
               </ul>
               <SubscriptionManager 
-                session={session} 
-                onSubscriptionChange={refreshSubscription}
+                isPaid={isPaid} 
+                onRefreshStatus={refreshSubscription}
               />
             </div>
           </div>
