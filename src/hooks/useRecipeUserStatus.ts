@@ -1,24 +1,22 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useSubscriptionStatus } from "./useSubscriptionStatus";
 
 export function useRecipeUserStatus(session?: any) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [currentSession, setCurrentSession] = useState(session);
+  
+  // Use the new subscription status hook
+  const { subscribed: isPaid, loading, refreshSubscription } = useSubscriptionStatus(session);
   
   // Update internal session if the prop changes
   useEffect(() => {
     if (session !== currentSession) {
       setCurrentSession(session);
-      setLoading(true); // Reset loading state when session changes
     }
   }, [session]);
 
   useEffect(() => {
-    let cancelled = false;
-    
     // DEBUG: Enhanced logging
     console.log("useRecipeUserStatus - SESSION RECEIVED:", {
       sessionExists: !!session,
@@ -26,10 +24,6 @@ export function useRecipeUserStatus(session?: any) {
       userId: session?.user?.id,
       userEmail: session?.user?.email,
       timestamp: new Date().toISOString(),
-      localStorage: {
-        'supabase.auth.token': localStorage.getItem('sb-xvtfkjjvzjjwpgrwteem-auth-token'),
-        'supabaseSession': localStorage.getItem('sb-xvtfkjjvzjjwpgrwteem-auth-token')
-      }
     });
     
     // Check if user is logged in
@@ -37,71 +31,8 @@ export function useRecipeUserStatus(session?: any) {
     console.log("useRecipeUserStatus - User logged in:", userLoggedIn);
     console.log("useRecipeUserStatus - Session user ID:", session?.user?.id);
     
-    if (!cancelled) {
-      setIsLoggedIn(userLoggedIn);
-    }
-    
-    async function fetchIsPaid() {
-      if (!userLoggedIn || !session?.user?.id) {
-        console.log("useRecipeUserStatus - No user, setting isPaid to false");
-        if (!cancelled) {
-          setIsPaid(false);
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        console.log("useRecipeUserStatus - Fetching profile for user:", session.user.id);
-        
-        // Fetch user's paid status from profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("is_paid")
-          .eq("id", session.user.id)
-          .single();
-        
-        console.log("useRecipeUserStatus - Profile data:", profileData);
-        console.log("useRecipeUserStatus - Profile error:", profileError);
-        
-        if (profileError) {
-          console.error("useRecipeUserStatus - Error fetching profile:", profileError);
-          // If no profile exists, user is not paid
-          if (profileError.code === 'PGRST116') { // No rows returned
-            console.log("useRecipeUserStatus - No profile found, defaulting to not paid");
-            if (!cancelled) {
-              setIsPaid(false);
-              setLoading(false);
-            }
-          } else {
-            if (!cancelled) {
-              setIsPaid(false);
-              setLoading(false);
-            }
-          }
-          return;
-        }
-
-        const paidStatus = Boolean(profileData?.is_paid);
-        console.log("useRecipeUserStatus - Paid status from DB:", paidStatus);
-        console.log("useRecipeUserStatus - Raw is_paid value:", profileData?.is_paid);
-        
-        if (!cancelled) {
-          setIsPaid(paidStatus);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("useRecipeUserStatus - Exception fetching paid status:", err);
-        if (!cancelled) {
-          setIsPaid(false);
-          setLoading(false);
-        }
-      }
-    }
-    
-    fetchIsPaid();
-    return () => { cancelled = true; };
-  }, [session?.user?.id, session]); // Added session to dependencies to catch session updates
+    setIsLoggedIn(userLoggedIn);
+  }, [session?.user?.id, session]);
 
   console.log("useRecipeUserStatus - Final state:", { isLoggedIn, isPaid, loading });
   
@@ -109,6 +40,7 @@ export function useRecipeUserStatus(session?: any) {
     isLoggedIn, 
     isPaid, 
     loading, 
-    session: currentSession 
+    session: currentSession,
+    refreshSubscription
   };
 }

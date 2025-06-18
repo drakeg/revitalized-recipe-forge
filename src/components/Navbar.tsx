@@ -8,6 +8,7 @@ import { secureSignOut } from "@/utils/authUtils";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
 import { Session } from "@supabase/supabase-js";
 import PremiumModal from "./PremiumModal";
+import SubscriptionManager from "./SubscriptionManager";
 
 type NavbarProps = {
   loggedIn: boolean;
@@ -19,7 +20,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
   const navigate = useNavigate();
   
   // Use prop session if available, otherwise get it from the hook
-  const { isPaid, loading, session: hookSession } = useRecipeUserStatus(propSession);
+  const { isPaid, loading, session: hookSession, refreshSubscription } = useRecipeUserStatus(propSession);
   const effectiveSession = propSession || hookSession;
   
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -150,6 +151,12 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
                   Shopping
                   {!loading && !isPaid && <Crown size={12} className="text-yellow-600 ml-1" />}
                 </Button>
+                {!loading && (
+                  <SubscriptionManager 
+                    isPaid={isPaid} 
+                    onRefreshStatus={refreshSubscription} 
+                  />
+                )}
                 <Button
                   variant="ghost"
                   size="sm"

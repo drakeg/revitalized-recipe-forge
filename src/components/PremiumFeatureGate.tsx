@@ -1,8 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Crown, Sparkles, X } from "lucide-react";
+import { Crown, Sparkles, X, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PremiumFeatureGateProps {
   featureName: string;
@@ -19,9 +21,38 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   isModal = false,
   onClose
 }) => {
-  const handleUpgrade = () => {
-    // TODO: Navigate to subscription page when implemented
-    console.log("Upgrade to premium clicked");
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    try {
+      console.log("Starting checkout process...");
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (error) {
+        console.error("Checkout error:", error);
+        toast.error("Failed to start checkout process. Please try again.");
+        return;
+      }
+
+      if (data?.url) {
+        console.log("Redirecting to checkout:", data.url);
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      } else {
+        toast.error("No checkout URL received. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const content = (
@@ -74,16 +105,33 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
           </ul>
         </div>
 
+        <div className="bg-gradient-to-r from-emerald-50 to-lime-50 rounded-lg p-4 border border-emerald-200">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-emerald-800">$9.99<span className="text-lg font-normal">/month</span></div>
+            <div className="text-emerald-600 text-sm">Cancel anytime • Secure payment via Stripe</div>
+          </div>
+        </div>
+
         <Button
           onClick={handleUpgrade}
-          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold px-8 py-3 text-lg"
+          disabled={isUpgrading}
+          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold px-8 py-3 text-lg w-full"
         >
-          <Crown className="w-5 h-5 mr-2" />
-          Upgrade to Premium
+          {isUpgrading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Starting checkout...
+            </>
+          ) : (
+            <>
+              <Crown className="w-5 h-5 mr-2" />
+              Upgrade to Premium
+            </>
+          )}
         </Button>
         
         <p className="text-sm text-emerald-600">
-          Already a premium subscriber? Please log out and log back in to refresh your account status.
+          Already a premium subscriber? Please refresh the page or log out and log back in to update your account status.
         </p>
       </CardContent>
     </Card>
