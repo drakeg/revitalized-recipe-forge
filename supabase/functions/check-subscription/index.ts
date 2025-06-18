@@ -86,6 +86,42 @@ serve(async (req) => {
     }
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // First, check if this user has been manually granted premium access in the database
+    logStep("Checking local database for manual premium access");
+    const { data: localSubscriber, error: localError } = await supabaseClient
+      .from("subscribers")
+      .select("*")
+      .eq("email", user.email)
+      .single();
+
+    if (!localError && localSubscriber?.subscribed) {
+      logStep("Found manual premium access in database", {
+        subscribed: localSubscriber.subscribed,
+        subscriptionTier: localSubscriber.subscription_tier,
+        subscriptionEnd: localSubscriber.subscription_end
+      });
+
+      // Also update the profiles table to ensure consistency
+      const profileUpdate = await supabaseClient.from("profiles").update({
+        is_paid: true
+      }).eq("id", user.id);
+
+      logStep("Profile table update", { 
+        error: profileUpdate.error?.message,
+        success: !profileUpdate.error
+      });
+
+      return new Response(JSON.stringify({
+        subscribed: true,
+        subscription_tier: localSubscriber.subscription_tier,
+        subscription_end: localSubscriber.subscription_end
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // If no manual access found, proceed with Stripe check
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     logStep("Stripe client initialized", { apiVersion: "2023-10-16" });
     
