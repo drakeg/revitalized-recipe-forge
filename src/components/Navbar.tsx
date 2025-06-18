@@ -197,7 +197,7 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
                         <Menu size={16} />
                         <span className="ml-1 hidden sm:inline">Menu</span>
                       </NavigationMenuTrigger>
-                      <NavigationMenuContent className="bg-white/95 backdrop-blur-sm shadow-lg border border-emerald-200 rounded-lg mt-2 z-50">
+                      <NavigationMenuContent className="bg-white/95 backdrop-blur-sm shadow-lg border border-emerald-200 rounded-lg mt-2 z-50 right-0 left-auto">
                         <div className="grid gap-3 p-4 w-[300px]">
                           {!loading && isPaid && (
                             <div className="flex items-center gap-2 mb-2">
