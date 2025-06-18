@@ -88,13 +88,20 @@ serve(async (req) => {
 
     // First, check if this user has been manually granted premium access in the database
     logStep("Checking local database for manual premium access");
-    const { data: localSubscriber, error: localError } = await supabaseClient
+    const { data: localSubscribers, error: localError } = await supabaseClient
       .from("subscribers")
       .select("*")
-      .eq("email", user.email)
-      .single();
+      .eq("email", user.email);
 
-    if (!localError && localSubscriber?.subscribed) {
+    logStep("Local database query result", {
+      error: localError?.message,
+      subscribersFound: localSubscribers?.length || 0,
+      subscribers: localSubscribers
+    });
+
+    // Check if we found a subscribed user in local database
+    const localSubscriber = localSubscribers?.find(sub => sub.subscribed);
+    if (localSubscriber) {
       logStep("Found manual premium access in database", {
         subscribed: localSubscriber.subscribed,
         subscriptionTier: localSubscriber.subscription_tier,
