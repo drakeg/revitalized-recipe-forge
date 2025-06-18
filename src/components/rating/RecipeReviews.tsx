@@ -1,14 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 import StarRating from "./StarRating";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import ReviewCard from "./ReviewCard";
+import ReviewForm from "./ReviewForm";
+import { Plus } from "lucide-react";
 
 interface Review {
   id: string;
@@ -210,16 +208,6 @@ const RecipeReviews: React.FC<RecipeReviewsProps> = ({ recipeId, session }) => {
     setShowAddReview(false);
   };
 
-  const getDisplayName = (profile: any) => {
-    if (profile.first_name || profile.last_name) {
-      return `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
-    }
-    if (profile.username) {
-      return profile.username;
-    }
-    return "Anonymous User";
-  };
-
   if (loading) {
     return <div className="text-center py-4">Loading reviews...</div>;
   }
@@ -263,103 +251,28 @@ const RecipeReviews: React.FC<RecipeReviewsProps> = ({ recipeId, session }) => {
 
       {/* Add/Edit Review Form */}
       {showAddReview && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {editingReview ? "Edit Your Review" : "Add Your Review"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Rating</label>
-              <StarRating
-                rating={newRating}
-                onRatingChange={setNewRating}
-                size="lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Review (optional)
-              </label>
-              <Textarea
-                value={newReviewText}
-                onChange={(e) => setNewReviewText(e.target.value)}
-                placeholder="Share your thoughts about this recipe..."
-                rows={4}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSubmitReview}
-                disabled={submitting}
-                className="flex-1"
-              >
-                {submitting
-                  ? "Submitting..."
-                  : editingReview
-                  ? "Update Review"
-                  : "Submit Review"}
-              </Button>
-              <Button variant="outline" onClick={cancelEditing}>
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <ReviewForm
+          isEditing={!!editingReview}
+          rating={newRating}
+          reviewText={newReviewText}
+          submitting={submitting}
+          onRatingChange={setNewRating}
+          onReviewTextChange={setNewReviewText}
+          onSubmit={handleSubmitReview}
+          onCancel={cancelEditing}
+        />
       )}
 
       {/* Reviews List */}
       <div className="space-y-4">
         {reviews.map((review) => (
-          <Card key={review.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback>
-                      {getDisplayName(review.profiles)
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">
-                      {getDisplayName(review.profiles)}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {format(new Date(review.created_at), "MMM d, yyyy")}
-                    </div>
-                  </div>
-                </div>
-                {session?.user?.id === review.user_id && (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => startEditing(review)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteReview(review.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <StarRating rating={review.rating} readonly />
-              {review.review && (
-                <p className="mt-3 text-gray-700">{review.review}</p>
-              )}
-            </CardContent>
-          </Card>
+          <ReviewCard
+            key={review.id}
+            review={review}
+            currentUserId={session?.user?.id}
+            onEdit={startEditing}
+            onDelete={handleDeleteReview}
+          />
         ))}
       </div>
 
