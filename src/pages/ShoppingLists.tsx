@@ -3,15 +3,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, Plus, List } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
-import ShoppingListCard from "@/components/shopping/ShoppingListCard";
+import { Plus, ShoppingCart } from "lucide-react";
 import CreateShoppingListModal from "@/components/shopping/CreateShoppingListModal";
-import PremiumFeatureGate from "@/components/PremiumFeatureGate";
+import ShoppingListCard from "@/components/shopping/ShoppingListCard";
+import SubscriptionManager from "@/components/SubscriptionManager";
 
 interface ShoppingList {
   id: string;
@@ -21,39 +20,41 @@ interface ShoppingList {
 }
 
 interface ShoppingListsProps {
-  session?: Session | null;
+  session: Session | null;
 }
 
 const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { subscribed: isPaid, loading: subscriptionLoading, refreshSubscription } = useSubscriptionStatus(session);
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { isPaid, loading: statusLoading } = useRecipeUserStatus(session);
-
-  // DEBUG: Log the exact state values that determine access
-  console.log("ShoppingLists - DEBUG - Access check values:", {
-    sessionExists: !!session?.user,
-    sessionUserId: session?.user?.id,
-    isPaid,
-    statusLoading,
-    shouldShowPremiumGate: session?.user && !statusLoading && !isPaid
-  });
 
   useEffect(() => {
-    if (!session?.user) {
+    if (!session) {
       navigate("/auth");
       return;
     }
-    fetchShoppingLists();
-  }, [session, navigate]);
+
+    if (!subscriptionLoading && !isPaid) {
+      // Show upgrade prompt but don't redirect immediately
+      return;
+    }
+
+    if (isPaid) {
+      fetchShoppingLists();
+    }
+  }, [session, isPaid, subscriptionLoading, navigate]);
 
   const fetchShoppingLists = async () => {
+    if (!session?.user?.id) return;
+
     try {
       const { data, error } = await supabase
         .from("shopping_lists")
         .select("*")
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -70,24 +71,27 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
   };
 
   const handleCreateShoppingList = async (title: string) => {
+    if (!session?.user?.id) return;
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("shopping_lists")
-        .insert([{
-          user_id: session!.user.id,
-          title
-        }])
-        .select()
-        .single();
+        .insert([
+          {
+            title,
+            user_id: session.user.id,
+          },
+        ]);
 
       if (error) throw error;
 
-      setShoppingLists([data, ...shoppingLists]);
-      setShowCreateModal(false);
       toast({
         title: "Success",
         description: "Shopping list created successfully!",
       });
+
+      setShowCreateModal(false);
+      fetchShoppingLists();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -97,17 +101,16 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
     }
   };
 
-  if (!session?.user) {
-    return null;
+  if (!session) {
+    return null; // Will redirect to auth
   }
 
-  // Show loading state while checking user status
-  if (statusLoading) {
+  if (subscriptionLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
-        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-100">
+        <Navbar loggedIn={true} userEmail={session.user?.email} session={session} />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-8">
+          <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto"></div>
             <p className="text-emerald-600 mt-2">Loading...</p>
           </div>
@@ -116,52 +119,64 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
     );
   }
 
-  // Show premium gate if user has session but is not paid
-  if (session?.user && !isPaid) {
-    console.log("ShoppingLists - SHOWING PREMIUM GATE - Debug values:", { 
-      hasSession: !!session?.user, 
-      isPaid, 
-      statusLoading, 
-      userId: session.user.id 
-    });
+  if (!isPaid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
-        <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
-        <PremiumFeatureGate 
-          featureName="Shopping Lists"
-          description="Create and manage your shopping lists, automatically generate them from your meal plans, and organize your grocery shopping efficiently."
-        />
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-100">
+        <Navbar loggedIn={true} userEmail={session.user?.email} session={session} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-3xl font-bold text-emerald-800 mb-4 flex items-center justify-center gap-2">
+              <ShoppingCart className="w-8 h-8" />
+              Shopping Lists
+            </h1>
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <div className="text-6xl mb-4">🔒</div>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Premium Feature Required</h2>
+              <p className="text-gray-600 mb-6">
+                Shopping lists are available exclusively to premium subscribers. Upgrade your account to access this feature and unlock:
+              </p>
+              <ul className="text-left text-gray-700 mb-8 space-y-2">
+                <li>✅ Create unlimited shopping lists</li>
+                <li>✅ Generate lists from meal plans</li>
+                <li>✅ Add recipes directly to lists</li>
+                <li>✅ Smart ingredient organization</li>
+                <li>✅ Check off items as you shop</li>
+              </ul>
+              <SubscriptionManager 
+                session={session} 
+                onSubscriptionChange={refreshSubscription}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Main content for paid users
-  console.log("ShoppingLists - SHOWING MAIN CONTENT for paid user");
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-50">
-      <Navbar loggedIn={!!session} userEmail={session?.user?.email} session={session} />
-      
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-lime-100">
+      <Navbar loggedIn={true} userEmail={session.user?.email} session={session} />
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-emerald-800 mb-2 flex items-center gap-2">
             <ShoppingCart className="w-8 h-8" />
             Shopping Lists
           </h1>
           <p className="text-emerald-600">
-            Create and manage your shopping lists
+            Manage your shopping lists and add ingredients from your recipes
           </p>
         </div>
 
         <div className="mb-6 flex justify-between items-center">
           <h2 className="text-2xl font-semibold text-emerald-800">
-            Your Lists ({shoppingLists.length})
+            Your Shopping Lists ({shoppingLists.length})
           </h2>
           <Button
             onClick={() => setShowCreateModal(true)}
             className="bg-emerald-500 hover:bg-emerald-600 text-white flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Create List
+            Create Shopping List
           </Button>
         </div>
 
@@ -171,28 +186,26 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
             <p className="text-emerald-600 mt-2">Loading shopping lists...</p>
           </div>
         ) : shoppingLists.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <List className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-emerald-800 mb-2">
-                No shopping lists yet
-              </h3>
-              <p className="text-emerald-600 mb-4">
-                Create your first shopping list to get organized!
-              </p>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white"
-              >
-                Create Your First List
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="text-center py-12">
+            <ShoppingCart className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-emerald-800 mb-2">
+              No shopping lists yet
+            </h3>
+            <p className="text-emerald-600 mb-4">
+              Create your first shopping list to get started!
+            </p>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              Create Your First Shopping List
+            </Button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {shoppingLists.map((list) => (
-              <ShoppingListCard 
-                key={list.id} 
+              <ShoppingListCard
+                key={list.id}
                 shoppingList={list}
                 onRefresh={fetchShoppingLists}
               />
@@ -205,7 +218,7 @@ const ShoppingLists: React.FC<ShoppingListsProps> = ({ session }) => {
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateShoppingList}
         />
-      </main>
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useRecipeUserStatus } from "@/hooks/useRecipeUserStatus";
 import { useRecipeForm } from "@/hooks/useRecipeForm";
@@ -89,6 +90,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, session }) => {
             onSave={saveRecipe}
             userIsLoggedIn={userIsLoggedIn}
             userIsPaid={userIsPaid}
+            session={session}
           />
         )}
       </div>

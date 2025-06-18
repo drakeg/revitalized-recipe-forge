@@ -11,6 +11,7 @@ interface RecipeResultSectionProps {
   onSave: () => void;
   userIsLoggedIn: boolean;
   userIsPaid: boolean;
+  session?: any;
 }
 
 const RecipeResultSection: React.FC<RecipeResultSectionProps> = ({
@@ -21,9 +22,10 @@ const RecipeResultSection: React.FC<RecipeResultSectionProps> = ({
   onSave,
   userIsLoggedIn,
   userIsPaid,
+  session,
 }) => (
   <>
-    <RecipeAnalysisResult result={analysis} />
+    <RecipeAnalysisResult result={analysis} session={session} />
     <RecipeFormActions
       userIsLoggedIn={userIsLoggedIn}
       userIsPaid={userIsPaid}

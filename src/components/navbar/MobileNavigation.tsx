@@ -68,13 +68,29 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 <User size={16} className="mr-2" />
                 Account
               </Button>
+              {isPaid && (
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => {
+                    onDashboardClick();
+                    setIsOpen(false);
+                  }}
+                >
+                  <LayoutDashboard size={16} className="mr-2" />
+                  Dashboard
+                </Button>
+              )}
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${!isPaid ? 'opacity-60' : ''}`}
                 onClick={() => {
-                  onMealPlansClick();
-                  setIsOpen(false);
+                  if (isPaid) {
+                    onMealPlansClick();
+                    setIsOpen(false);
+                  }
                 }}
+                disabled={!isPaid}
               >
                 <Calendar size={16} className="mr-2" />
                 Meal Plans
@@ -82,11 +98,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className={`justify-start ${!isPaid ? 'opacity-60' : ''}`}
                 onClick={() => {
-                  onShoppingListsClick();
-                  setIsOpen(false);
+                  if (isPaid) {
+                    onShoppingListsClick();
+                    setIsOpen(false);
+                  }
                 }}
+                disabled={!isPaid}
               >
                 <ShoppingCart size={16} className="mr-2" />
                 Shopping Lists

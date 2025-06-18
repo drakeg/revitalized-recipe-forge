@@ -47,9 +47,9 @@ const RecipeFormActions: React.FC<RecipeFormActionsProps> = ({
             {saving ? "Saving..." : "Save to My Recipe Book"}
           </Button>
         )}
-        {userIsLoggedIn && !userIsPaid && (
+        {!userIsPaid && (
           <span className="flex items-center text-yellow-900 bg-yellow-100 px-4 py-2 rounded-md border border-yellow-300 font-semibold text-sm shadow">
-            Paid membership required to save recipes.
+            {userIsLoggedIn ? "Paid membership required to save recipes." : "Sign up and upgrade to save recipes."}
           </span>
         )}
       </div>
