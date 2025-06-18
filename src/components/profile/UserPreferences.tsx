@@ -155,9 +155,9 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ session }) => {
             <SelectValue placeholder="Select your time preference" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="quick">Quick (< 30 min)</SelectItem>
+            <SelectItem value="quick">Quick (&lt; 30 min)</SelectItem>
             <SelectItem value="medium">Medium (30-60 min)</SelectItem>
-            <SelectItem value="long">Long (> 60 min)</SelectItem>
+            <SelectItem value="long">Long (&gt; 60 min)</SelectItem>
           </SelectContent>
         </Select>
       </div>
