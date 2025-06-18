@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Facebook, Twitter, MessageCircle, Image } from "lucide-react";
 
 interface Recipe {
   id: string;
@@ -39,6 +39,8 @@ const RecipeShareModal: React.FC<RecipeShareModalProps> = ({
   if (!recipe) return null;
 
   const shareUrl = `${window.location.origin}/recipe/${recipe.id}`;
+  const shareTitle = `Check out this amazing recipe: ${recipe.title}`;
+  const shareDescription = "Found this great recipe on Recipe Converter - thought you'd love it!";
 
   const copyToClipboard = async () => {
     try {
@@ -76,6 +78,28 @@ const RecipeShareModal: React.FC<RecipeShareModalProps> = ({
     }
   };
 
+  const shareToFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareTitle)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareToTwitter = () => {
+    const text = `${shareTitle} ${shareUrl}`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareToPinterest = () => {
+    const url = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${encodeURIComponent(shareTitle)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareToWhatsApp = () => {
+    const text = `${shareTitle} ${shareUrl}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -85,7 +109,53 @@ const RecipeShareModal: React.FC<RecipeShareModalProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Social Media Share Buttons */}
+          <div>
+            <Label className="text-sm font-medium mb-3 block">
+              Share on Social Media
+            </Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={shareToFacebook}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                <Facebook size={16} />
+                Facebook
+              </Button>
+              <Button
+                onClick={shareToTwitter}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-sky-200 text-sky-700 hover:bg-sky-50"
+              >
+                <Twitter size={16} />
+                Twitter
+              </Button>
+              <Button
+                onClick={shareToPinterest}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-red-200 text-red-700 hover:bg-red-50"
+              >
+                <Image size={16} />
+                Pinterest
+              </Button>
+              <Button
+                onClick={shareToWhatsApp}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-green-200 text-green-700 hover:bg-green-50"
+              >
+                <MessageCircle size={16} />
+                WhatsApp
+              </Button>
+            </div>
+          </div>
+
+          {/* Share Link */}
           <div>
             <Label htmlFor="share-url" className="text-sm font-medium">
               Share Link
@@ -112,6 +182,7 @@ const RecipeShareModal: React.FC<RecipeShareModalProps> = ({
             </p>
           </div>
 
+          {/* Quick Actions */}
           <div className="border-t pt-4">
             <Label className="text-sm font-medium">Quick Actions</Label>
             <div className="flex gap-2 mt-2">
