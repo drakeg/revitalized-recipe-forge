@@ -151,12 +151,10 @@ const Navbar: React.FC<NavbarProps> = ({ loggedIn, userEmail, session: propSessi
                   Shopping
                   {!loading && !isPaid && <Crown size={12} className="text-yellow-600 ml-1" />}
                 </Button>
-                {!loading && (
-                  <SubscriptionManager 
-                    isPaid={isPaid} 
-                    onRefreshStatus={refreshSubscription} 
-                  />
-                )}
+                <SubscriptionManager 
+                  isPaid={isPaid} 
+                  onRefreshStatus={refreshSubscription} 
+                />
                 <Button
                   variant="ghost"
                   size="sm"
