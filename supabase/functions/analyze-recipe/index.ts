@@ -7,6 +7,65 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting implementation
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+class RateLimiter {
+  private store = new Map<string, RateLimitEntry>();
+  private readonly windowMs: number;
+  private readonly maxRequests: number;
+
+  constructor(windowMs: number = 60000, maxRequests: number = 5) {
+    this.windowMs = windowMs;
+    this.maxRequests = maxRequests;
+  }
+
+  isAllowed(key: string): { allowed: boolean; remaining: number; resetTime: number } {
+    const now = Date.now();
+    const entry = this.store.get(key);
+
+    if (!entry || now > entry.resetTime) {
+      this.store.set(key, {
+        count: 1,
+        resetTime: now + this.windowMs
+      });
+      return {
+        allowed: true,
+        remaining: this.maxRequests - 1,
+        resetTime: now + this.windowMs
+      };
+    }
+
+    if (entry.count >= this.maxRequests) {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetTime: entry.resetTime
+      };
+    }
+
+    entry.count++;
+    return {
+      allowed: true,
+      remaining: this.maxRequests - entry.count,
+      resetTime: entry.resetTime
+    };
+  }
+}
+
+const rateLimiter = new RateLimiter(60000, 5); // 5 requests per minute
+
+function getClientId(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIP = req.headers.get('x-real-ip');
+  const cfConnectingIP = req.headers.get('cf-connecting-ip');
+  
+  return forwarded?.split(',')[0] || realIP || cfConnectingIP || 'unknown';
+}
+
 // Approximate token limit (leaving room for system prompt and response)
 const MAX_TEXT_LENGTH = 50000; // Conservative limit for text characters
 
@@ -17,6 +76,27 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Rate limiting check
+    const clientId = getClientId(req);
+    const { allowed, remaining, resetTime } = rateLimiter.isAllowed(clientId);
+    
+    if (!allowed) {
+      const waitTime = Math.ceil((resetTime - Date.now()) / 1000);
+      return new Response(JSON.stringify({ 
+        error: `Rate limit exceeded. Try again in ${waitTime} seconds.`,
+        retryAfter: waitTime
+      }), {
+        status: 429,
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": resetTime.toString(),
+          "Retry-After": waitTime.toString()
+        },
+      });
+    }
+
     const { title, text, fileUrl, url } = await req.json();
 
     let textToAnalyze = text || "";
@@ -233,7 +313,12 @@ ${textToAnalyze ? textToAnalyze : ""}`;
       extractedText: (fileUrl || url) ? textToAnalyze : undefined 
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "application/json",
+        "X-RateLimit-Remaining": remaining.toString(),
+        "X-RateLimit-Reset": resetTime.toString()
+      },
     });
   } catch (error) {
     console.error("Error in analyze-recipe (Deepseek):", error);

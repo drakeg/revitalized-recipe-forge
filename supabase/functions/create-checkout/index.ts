@@ -1,24 +1,100 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@14.21.0";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
-};
+// Rate limiting implementation
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
+class RateLimiter {
+  private store = new Map<string, RateLimitEntry>();
+  private readonly windowMs: number;
+  private readonly maxRequests: number;
+
+  constructor(windowMs: number = 900000, maxRequests: number = 3) { // 15 minutes, 3 requests
+    this.windowMs = windowMs;
+    this.maxRequests = maxRequests;
+  }
+
+  isAllowed(key: string): { allowed: boolean; remaining: number; resetTime: number } {
+    const now = Date.now();
+    const entry = this.store.get(key);
+
+    if (!entry || now > entry.resetTime) {
+      this.store.set(key, {
+        count: 1,
+        resetTime: now + this.windowMs
+      });
+      return {
+        allowed: true,
+        remaining: this.maxRequests - 1,
+        resetTime: now + this.windowMs
+      };
+    }
+
+    if (entry.count >= this.maxRequests) {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetTime: entry.resetTime
+      };
+    }
+
+    entry.count++;
+    return {
+      allowed: true,
+      remaining: this.maxRequests - entry.count,
+      resetTime: entry.resetTime
+    };
+  }
+}
+
+const rateLimiter = new RateLimiter(900000, 3); // 3 checkout attempts per 15 minutes
+
+function getClientId(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIP = req.headers.get('x-real-ip');
+  const cfConnectingIP = req.headers.get('cf-connecting-ip');
+  
+  return forwarded?.split(',')[0] || realIP || cfConnectingIP || 'unknown';
+}
+
+serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Rate limiting check
+  const clientId = getClientId(req);
+  const { allowed, remaining, resetTime } = rateLimiter.isAllowed(clientId);
+  
+  if (!allowed) {
+    const waitTime = Math.ceil((resetTime - Date.now()) / 1000);
+    console.log(`[CREATE-CHECKOUT] Rate limit exceeded for ${clientId}`);
+    return new Response(JSON.stringify({ 
+      error: `Too many checkout attempts. Try again in ${waitTime} seconds.`,
+      retryAfter: waitTime
+    }), {
+      status: 429,
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "application/json",
+        "X-RateLimit-Remaining": remaining.toString(),
+        "X-RateLimit-Reset": resetTime.toString(),
+        "Retry-After": waitTime.toString()
+      },
+    });
+  }
+
   try {
+    console.log('[CREATE-CHECKOUT] Function started');
     logStep("Function started");
     logStep("Request method", { method: req.method });
     logStep("Request headers", { 
@@ -129,10 +205,14 @@ serve(async (req) => {
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        "X-RateLimit-Remaining": remaining.toString(),
+        "X-RateLimit-Reset": resetTime.toString()
+      },
     });
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : 'No stack trace';
     logStep("ERROR in create-checkout", { 
