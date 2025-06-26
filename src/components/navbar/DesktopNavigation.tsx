@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LayoutDashboard, Calendar, ShoppingCart, Crown, LogOut } from "lucide-react";
+import UpgradeButton from "../UpgradeButton";
 
 interface DesktopNavigationProps {
   isPaid: boolean;
@@ -29,6 +30,10 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
         <Badge className="bg-yellow-500 text-yellow-900 hidden sm:flex">
           <Crown size={12} className="mr-1" /> Pro
         </Badge>
+      )}
+
+      {!loading && !isPaid && (
+        <UpgradeButton size="sm" showText={false} className="mr-2" />
       )}
 
       <div className="hidden lg:flex items-center gap-2">

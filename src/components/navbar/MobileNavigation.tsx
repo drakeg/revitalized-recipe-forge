@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LayoutDashboard, Calendar, ShoppingCart, Crown, LogOut, Menu } from "lucide-react";
+import UpgradeButton from "../UpgradeButton";
 
 interface MobileNavigationProps {
   isPaid: boolean;
@@ -27,24 +28,28 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   return (
     <div className="lg:hidden relative">
-      <Button
-        variant="outline"
-        size="sm"
-        className="bg-emerald-100 border-emerald-400 text-emerald-900 hover:bg-emerald-200 px-3"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <Menu size={18} />
-      </Button>
+      <div className="flex items-center gap-2">
+        {!loading && !isPaid && (
+          <UpgradeButton size="sm" showText={false} />
+        )}
+        
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-emerald-100 border-emerald-400 text-emerald-900 hover:bg-emerald-200 px-3"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <Menu size={18} />
+        </Button>
+      </div>
       
       {isOpen && (
         <>
-          {/* Backdrop to close menu when clicking outside */}
           <div 
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Dropdown menu */}
           <div className="absolute right-0 top-full mt-2 w-[280px] bg-white/95 backdrop-blur-sm shadow-lg border border-emerald-200 rounded-lg z-50">
             <div className="grid gap-3 p-4">
               {!loading && isPaid && (
@@ -54,6 +59,13 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   </Badge>
                 </div>
               )}
+              
+              {!loading && !isPaid && (
+                <div className="mb-3">
+                  <UpgradeButton size="sm" className="w-full" />
+                </div>
+              )}
+              
               <Button
                 variant="ghost"
                 className="justify-start"

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Crown, Sparkles, X, Loader2 } from "lucide-react";
+import { Crown, Sparkles, X, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -42,7 +42,6 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
 
       if (data?.url) {
         console.log("Redirecting to checkout:", data.url);
-        // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
       } else {
         toast.error("No checkout URL received. Please try again.");
@@ -74,7 +73,7 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
         </div>
         <CardTitle className="text-2xl font-bold text-emerald-800 flex items-center justify-center gap-2">
           <Sparkles className="w-6 h-6 text-yellow-500" />
-          Premium Feature: {featureName}
+          Unlock {featureName}
           <Sparkles className="w-6 h-6 text-yellow-500" />
         </CardTitle>
       </CardHeader>
@@ -84,31 +83,27 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
         </p>
         
         <div className="bg-white/70 rounded-lg p-6 border border-yellow-200">
-          <h3 className="font-semibold text-emerald-800 mb-3">Premium Features Include:</h3>
-          <ul className="text-left text-emerald-700 space-y-2">
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-              Advanced meal planning with weekly/monthly views
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-              Automated shopping list generation from meal plans
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-              Recipe categorization and advanced filtering
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-              Priority customer support
-            </li>
-          </ul>
-        </div>
-
-        <div className="bg-gradient-to-r from-emerald-50 to-lime-50 rounded-lg p-4 border border-emerald-200">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-emerald-800">$9.99<span className="text-lg font-normal">/month</span></div>
-            <div className="text-emerald-600 text-sm">Cancel anytime • Secure payment via Stripe</div>
+          <h3 className="font-semibold text-emerald-800 mb-4">Get Premium Access For Just:</h3>
+          <div className="text-4xl font-bold text-emerald-800 mb-2">$9.99<span className="text-xl font-normal">/month</span></div>
+          <div className="text-emerald-600 text-sm mb-4">One simple price • All premium features included</div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-left">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-emerald-700">Advanced meal planning</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-emerald-700">Smart shopping lists</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-emerald-700">Recipe organization</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-emerald-700">Priority support</span>
+            </div>
           </div>
         </div>
 
@@ -125,13 +120,13 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
           ) : (
             <>
               <Crown className="w-5 h-5 mr-2" />
-              Upgrade to Premium
+              Get Premium Access Now
             </>
           )}
         </Button>
         
-        <p className="text-sm text-emerald-600">
-          Already a premium subscriber? Please refresh the page or log out and log back in to update your account status.
+        <p className="text-xs text-emerald-600">
+          Cancel anytime • Secure payment via Stripe • 30-day money-back guarantee
         </p>
       </CardContent>
     </Card>
