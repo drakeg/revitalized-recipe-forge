@@ -25,10 +25,20 @@ const UpgradeButton: React.FC<UpgradeButtonProps> = ({
     try {
       console.log("Starting checkout process...");
       
+      // Get current session (may be null for guests)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Include auth header if user is logged in
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (error) {

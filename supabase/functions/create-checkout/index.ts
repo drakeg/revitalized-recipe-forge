@@ -101,7 +101,6 @@ serve(async (req: Request) => {
   }
 
   try {
-    console.log('[CREATE-CHECKOUT] Function started');
     logStep("Function started");
     logStep("Request method", { method: req.method });
     logStep("Request headers", { 
@@ -131,49 +130,53 @@ serve(async (req: Request) => {
       supabaseAnonKey ?? ""
     );
 
+    // Check if user is authenticated (optional for checkout)
+    let user = null;
+    let userEmail = null;
+    
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      logStep("ERROR: No authorization header provided");
-      throw new Error("No authorization header provided");
+    if (authHeader) {
+      logStep("Authorization header found, attempting to authenticate user");
+      const token = authHeader.replace("Bearer ", "");
+      
+      try {
+        const { data, error: authError } = await supabaseClient.auth.getUser(token);
+        if (!authError && data.user?.email) {
+          user = data.user;
+          userEmail = data.user.email;
+          logStep("User authenticated", { userId: user.id, email: userEmail });
+        } else {
+          logStep("Authentication failed, proceeding as guest", { error: authError?.message });
+        }
+      } catch (error) {
+        logStep("Authentication error, proceeding as guest", { error: error.message });
+      }
+    } else {
+      logStep("No authorization header, proceeding as guest checkout");
     }
-    logStep("Authorization header found");
-
-    const token = authHeader.replace("Bearer ", "");
-    logStep("Extracting user from token");
-    
-    const { data, error: authError } = await supabaseClient.auth.getUser(token);
-    if (authError) {
-      logStep("ERROR: Authentication failed", { error: authError.message });
-      throw new Error(`Authentication error: ${authError.message}`);
-    }
-    
-    const user = data.user;
-    if (!user?.email) {
-      logStep("ERROR: User not authenticated or email not available");
-      throw new Error("User not authenticated or email not available");
-    }
-    logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     logStep("Stripe client initialized");
     
-    // Check if customer already exists
-    logStep("Looking up existing customer");
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Check if customer already exists (only if we have a user email)
     let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
-    } else {
-      logStep("No existing customer found");
+    if (userEmail) {
+      logStep("Looking up existing customer");
+      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found existing customer", { customerId });
+      } else {
+        logStep("No existing customer found");
+      }
     }
 
     const origin = req.headers.get("origin") || "https://xvtfkjjvzjjwpgrwteem.supabase.co";
-    logStep("Creating checkout session", { origin, customerId: customerId || "New customer" });
+    logStep("Creating checkout session", { origin, customerId: customerId || "New customer", userEmail: userEmail || "Guest" });
 
     const sessionData = {
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : userEmail,
       line_items: [
         {
           price_data: {
@@ -192,15 +195,21 @@ serve(async (req: Request) => {
       success_url: `${origin}/?subscription=success`,
       cancel_url: `${origin}/?subscription=cancelled`,
       metadata: {
-        user_id: user.id,
+        user_id: user?.id || "guest",
       },
+      // For guests, collect email during checkout
+      ...(userEmail ? {} : { 
+        customer_creation: "always" as const,
+        billing_address_collection: "required" as const 
+      }),
     };
 
     logStep("Session data prepared", { 
       mode: sessionData.mode,
       lineItemsCount: sessionData.line_items.length,
       successUrl: sessionData.success_url,
-      cancelUrl: sessionData.cancel_url
+      cancelUrl: sessionData.cancel_url,
+      isGuest: !userEmail
     });
 
     const session = await stripe.checkout.sessions.create(sessionData);

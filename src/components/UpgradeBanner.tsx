@@ -51,12 +51,13 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ isLoggedIn, isPaid }) => 
           </div>
           
           <div className="flex flex-col items-center gap-4">
-            {isLoggedIn ? (
-              <UpgradeButton size="lg" className="px-8 py-3 text-lg" />
-            ) : (
+            <UpgradeButton size="lg" className="px-8 py-3 text-lg" />
+            {!isLoggedIn && (
               <div className="text-center">
-                <p className="text-emerald-600 mb-3">Sign up to get started!</p>
-                <UpgradeButton size="lg" className="px-8 py-3 text-lg" showText={true} />
+                <p className="text-emerald-600 text-sm">
+                  You can subscribe now and create an account during checkout,<br />
+                  or <a href="/auth" className="underline font-medium">sign up first</a> for a personalized experience.
+                </p>
               </div>
             )}
           </div>
