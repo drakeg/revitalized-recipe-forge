@@ -97,7 +97,15 @@ serve(async (req: Request) => {
       });
     }
 
-    const { title, text, fileUrl, url } = await req.json();
+    const { title, text, fileUrl, url, isAnonymous } = await req.json();
+
+    console.log("Request received:", { 
+      hasTitle: !!title, 
+      hasText: !!text, 
+      hasFileUrl: !!fileUrl, 
+      hasUrl: !!url, 
+      isAnonymous 
+    });
 
     let textToAnalyze = text || "";
 
@@ -274,6 +282,8 @@ RECIPE:
 ${title ? "Title: " + title : ""}
 ${textToAnalyze ? textToAnalyze : ""}`;
 
+    console.log("Calling Deepseek API with prompt length:", prompt.length);
+
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -292,7 +302,10 @@ ${textToAnalyze ? textToAnalyze : ""}`;
     });
 
     const data = await response.json();
+    console.log("Deepseek API response status:", response.status);
+    
     if (!response.ok) {
+      console.error("Deepseek API error:", data);
       // Handle specific token limit errors
       if (data.error?.message?.includes("maximum context length")) {
         return new Response(JSON.stringify({ 
@@ -307,6 +320,7 @@ ${textToAnalyze ? textToAnalyze : ""}`;
     }
 
     const result = data.choices?.[0]?.message?.content || "Analysis failed, please try again.";
+    console.log("Recipe analysis completed successfully");
     
     return new Response(JSON.stringify({ 
       result,
