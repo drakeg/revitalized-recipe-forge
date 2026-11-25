@@ -1,5 +1,8 @@
 # Welcome to your Lovable project
 
+[![License](https://img.shields.io/github/license/drakeg/revitalized-recipe-forge)](https://github.com/drakeg/revitalized-recipe-forge/blob/main/LICENSE)
+
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/929917f4-7496-4ec0-80aa-b77c38e457ca
